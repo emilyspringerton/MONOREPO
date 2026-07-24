@@ -53,6 +53,7 @@ These are standalone repos not in `go.work`:
 | `EmilyOS` | Go | Policy kernel: posture-gated sessions, RBAC, SOC 2 audit log |
 | `PITVIPER` | Go | SDL2 terminal emulator with Emily Prime integration hooks |
 | `EDIS` | PHP | WordPress plugins fronting FatBaby signalapi and Emily Prime |
+| `GOLDENBAND` | C + Go | `.gband` animation asset format + sampler + BVH import pipeline (HQ-SPEC-SIM-100) |
 
 ---
 
