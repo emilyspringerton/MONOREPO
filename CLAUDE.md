@@ -54,6 +54,7 @@ These are standalone repos not in `go.work`:
 | `PITVIPER` | Go | SDL2 terminal emulator with Emily Prime integration hooks |
 | `EDIS` | PHP | WordPress plugins fronting FatBaby signalapi and Emily Prime |
 | `GOLDENBAND` | C + Go | `.gband` animation asset format + sampler + BVH import pipeline (HQ-SPEC-SIM-100) |
+| `EINHORN_SURVIVAL` | Java (Paper config) | Real EINHORN_INDUSTRIAL community Minecraft survival server, live on `:25565` |
 
 ---
 
