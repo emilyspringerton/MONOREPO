@@ -55,6 +55,7 @@ These are standalone repos not in `go.work`:
 | `EDIS` | PHP | WordPress plugins fronting FatBaby signalapi and Emily Prime |
 | `GOLDENBAND` | C + Go | `.gband` animation asset format + sampler + BVH import pipeline (HQ-SPEC-SIM-100) |
 | `EINHORN_SURVIVAL` | Java (Paper config) | Real EINHORN_INDUSTRIAL community Minecraft survival server, live on `:25565` |
+| `SKULDMARK` | Go | 25-char instrument identifier format (MIC + symbol + CIK + checksum); public domain (Unlicense) |
 | `GTA7` | Java (Paper plugin) | TRAPX doctrine (Field Offices, Watchers, K9, Media, Party Stores) as a Paper plugin on EINHORN_SURVIVAL; scoping doc at `docs/NORTHSTAR.md`, VS0 not yet built |
 
 ---
