@@ -106,11 +106,17 @@ These are mandatory, not optional:
 
 **1. Backlog First** — Read `EMILY/BACKLOG.md` before any work. Pick the highest-priority `[ ]` in the lowest open section. **Founder real-time direction overrides picking, never overrides logging — it always goes into BACKLOG.md, no exceptions, log-then-work or work-then-log either order is fine but it always lands there.** See `EMILY/docs/THE_EMILY_WAY.md` Principle 1 for the full rationale.
 
+**1a. Route founder input through the observation queue first** — Any founder real-time direction, in any repo (not just FatBaby-flavored asks), gets posted via `emily observe -s info "Founder real-time: <summary>"` before you act on it, then curated/logged into BACKLOG.md, then worked. This is how direction given while you're offline still gets picked up the moment obs-watcher comes back around. See `EMILY/docs/THE_EMILY_WAY.md` Principle 18 ("Pave the Cow Paths"). The `emily observe`/"FatBaby observation" naming is historical and known to be a slight misnomer for non-FatBaby content — use it anyway, don't rename it unprompted.
+
 **2. Apple Before Mark-Done** — Every `[x]` in BACKLOG.md requires a prior Apple:
 ```bash
 emily apples post -t completion -repo <REPONAME> "<title>"
 # Then mark [x] with Apple ID, commit EMILY/BACKLOG.md, push
 ```
+`emily apples post`, `emily changelog add`, and `emily observe` auto-stamp the active `emily
+session` fingerprint (`emily session new`/`current`) as run_id — no flag needed. When hand-editing
+BACKLOG.md instead of going through the CLI, append the current session tag yourself so the entry
+stays traceable to the session that logged it.
 
 **3. CHANGELOG on every meaningful change**:
 ```bash
