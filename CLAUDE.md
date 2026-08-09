@@ -142,7 +142,11 @@ perf(scope): description
 backlog: ✓ S22-01
 golden-index: add NAME
 ```
-One atomic thing per commit. Push immediately after — Emily Prime reads the latest state.
+One atomic thing per commit. Push immediately after — Emily Prime reads the latest state. **Every
+commit message body ends with a blank line then `session: <tag>`** (`emily session current`) —
+`emily changelog add` and every BACKLOG.md auto-commit do this automatically; hand-written `git
+commit -m` calls need it added manually every time (founder, 2026-08-09 — caught this missing
+from every commit message despite Apples/CHANGELOG already carrying it).
 
 **7. Multi-repo changes** — Commit each repo independently in dependency order. Reference sibling commits in messages. Update `EMILY/BACKLOG.md` last.
 
