@@ -178,3 +178,12 @@ Each sub-repo has its own CLAUDE.md with commands, stack details, and what not t
 - `emily.cli/CLAUDE.md` — full command reference, TUI layout, Apple/CHANGELOG/golden-index protocol
 - `SHANKPIT/CLAUDE.md` — UDP FPS architecture, DragonsNShit bridge, season lineage
 - `MJOLNIR/CLAUDE.md` — Android build, FCM push registration, notification channels
+
+## Frame-Break Reframing
+
+Founder-sourced prompting technique (REDGARDEN/NORTHSTAR.md §28, full origin in
+REDGARDEN/docs2/MULTI_AGENT_RD_RESEARCH_NOTES.md §5): given a request, name the underlying
+structural/systemic pattern it's one instance of — one level of abstraction up — as an added
+lens during planning/triage/judgment calls. Use it to spot the general case behind a specific
+ask. It augments judgment, it does not replace doing the work: direct, concrete execution of
+the literal task asked for still happens every time.
