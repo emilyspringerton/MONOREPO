@@ -58,6 +58,7 @@ These are standalone repos not in `go.work`:
 | `SKULDMARK` | Go | 25-char instrument identifier format (MIC + symbol + CIK + checksum); public domain (Unlicense) |
 | `GTA7` | Java (Paper plugin) | TRAPX doctrine (Field Offices, Watchers, K9, Media, Party Stores) as a Paper plugin on EINHORN_SURVIVAL; scoping doc at `docs/NORTHSTAR.md`, VS0 not yet built |
 | `CarePyre` | TBD | New repo (2026-08-10), stub only — no scope/stack decided yet, more founder direction to follow |
+| `EXODUS` | Python (planned) | New repo (2026-08-11), scaffolding only — home for REDGARDEN's §25.4 PFSP autocurriculum research, extracted for eventual open release; extraction itself not started, see `EXODUS/README.md` |
 
 ---
 
