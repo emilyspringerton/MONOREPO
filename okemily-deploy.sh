@@ -22,6 +22,13 @@
 # blog/, so it wasn't covered by that exclusion either. Source of truth is
 # the same var/blog.db as blog/ -- re-render via cmd/blog-rerender if this
 # is ever lost the same way blog/ was on 2026-07-19.
+#
+# prompt-o-verse/ is EXCLUDED for the identical reason (added 2026-08-17):
+# rendered live by IDUNA's promptoverse handler (internal/promptoverse/
+# render.go) straight into /var/www/okemily/prompt-o-verse, source of truth
+# is IDUNA's var/promptoverse.db (+ the generated image files themselves,
+# which only exist on disk, not in git). Same failure mode as blog/tyler if
+# this exclusion is ever removed.
 set -euo pipefail
 mkdir -p /var/www/okemily
-rsync -a --delete /home/fatbaby/OKEMILY/ /var/www/okemily/ --exclude='.git' --exclude='blog' --exclude='tyler' --exclude='blog-manifest.txt'
+rsync -a --delete /home/fatbaby/OKEMILY/ /var/www/okemily/ --exclude='.git' --exclude='blog' --exclude='tyler' --exclude='blog-manifest.txt' --exclude='prompt-o-verse'
