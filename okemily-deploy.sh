@@ -29,6 +29,14 @@
 # is IDUNA's var/promptoverse.db (+ the generated image files themselves,
 # which only exist on disk, not in git). Same failure mode as blog/tyler if
 # this exclusion is ever removed.
+#
+# battlegrounds/ is EXCLUDED for the identical reason (added 2026-08-20):
+# the real GFD Battlegrounds WASM build output (~1MB of generated .js/.wasm
+# binaries), source of truth is GoblinFoxDragon/apps2/battlegrounds_gui/
+# wasm/ (build_wasm.sh), not this repo -- same failure mode as blog/tyler/
+# prompt-o-verse if this exclusion is ever removed. Redeploy by copying
+# that directory's build output straight into /var/www/okemily/battlegrounds/
+# after running build_wasm.sh, same as the others' own render step.
 set -euo pipefail
 mkdir -p /var/www/okemily
-rsync -a --delete /home/fatbaby/OKEMILY/ /var/www/okemily/ --exclude='.git' --exclude='blog' --exclude='tyler' --exclude='blog-manifest.txt' --exclude='prompt-o-verse'
+rsync -a --delete /home/fatbaby/OKEMILY/ /var/www/okemily/ --exclude='.git' --exclude='blog' --exclude='tyler' --exclude='blog-manifest.txt' --exclude='prompt-o-verse' --exclude='battlegrounds'
