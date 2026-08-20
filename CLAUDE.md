@@ -62,6 +62,7 @@ These are standalone repos not in `go.work`:
 | `TTT` | TBD | New repo (2026-08-11), stub only — "Tyler Teaches Typing," real VS0 implementation actually lives in `SHANKPIT`, this repo's own purpose undecided, see `TTT/README.md` |
 | `ECOWAR` | C (planned) | New repo (2026-08-20), stub only — hard fork of `GoblinFoxDragon/apps2/battlegrounds_gui`'s interface + mainline REDGARDEN's newer features (AI/items/WASD movement); real open design questions (fork scope, sync model, matchmaking port) unresolved, see `ECOWAR/README.md` |
 | `PARENA` | C (VS0) | New repo (2026-08-20), NORTHSTAR only — new from-scratch language (S-expression syntax, compile-time region-based memory safety, multi-target C/JVM/TS/Wasm compilation) + editor/plugin API; GFD mod-surface candidate, integration deliberately deferred; VS0 (`parena-c` compiler) scoped with a real Definition of Done, not yet built, see `PARENA/NORTHSTAR.md` |
+| `SAND` | PARENA (planned) | New repo (2026-08-20), stub only — a native code editor written in PARENA itself ("S-expression And Not Dumbshit"), same stated mission as PITVIPER ("basically i am extending my IDE which is actually this VPS"); PITVIPER's own Go implementation is unaffected and stays exactly as-is — SAND is a separate, new fork, not a rewrite-in-place. Mod-surface/plugin API is its first real feature, not an afterthought. Not started as actual code yet; named only, see `EMILY/BACKLOG.md` S189-38 for the full naming history (IRONCLAD → JEWEL → SAND). |
 
 ---
 
