@@ -60,6 +60,7 @@ These are standalone repos not in `go.work`:
 | `CarePyre` | TBD | New repo (2026-08-10), stub only — no scope/stack decided yet, more founder direction to follow |
 | `EXODUS` | Python (planned) | New repo (2026-08-11), scaffolding only — home for REDGARDEN's §25.4 PFSP autocurriculum research, extracted for eventual open release; extraction itself not started, see `EXODUS/README.md` |
 | `TTT` | TBD | New repo (2026-08-11), stub only — "Tyler Teaches Typing," real VS0 implementation actually lives in `SHANKPIT`, this repo's own purpose undecided, see `TTT/README.md` |
+| `ECOWAR` | C (planned) | New repo (2026-08-20), stub only — hard fork of `GoblinFoxDragon/apps2/battlegrounds_gui`'s interface + mainline REDGARDEN's newer features (AI/items/WASD movement); real open design questions (fork scope, sync model, matchmaking port) unresolved, see `ECOWAR/README.md` |
 
 ---
 
