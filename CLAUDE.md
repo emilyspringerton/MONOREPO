@@ -160,6 +160,21 @@ from every commit message despite Apples/CHANGELOG already carrying it).
 
 ---
 
+## Compression Convention (standing, monorepo-wide)
+
+**LZ4 is the default compression codec across every repo in this monorepo** — founder, real-time:
+"omg we need compression stdlibs" → "zip" → "gz" → "lz4" → "lz4 is always the defauolt" → "write
+that into all repo claude readmes". Chosen for the same real reason PARENA's own
+`stdlib/compress/lz4.prn` names it: keeping interactive protocols (PITVIPER's remote-IDE wire
+format, any future wire/IPC format) fast, LZ4's own real niche over gzip/zstd's better ratio but
+slower speed. Default to LZ4 for any new compression need anywhere in this monorepo unless a
+specific repo's own CLAUDE.md states a real, considered reason to deviate (e.g. a format that
+mandates gzip/deflate for compatibility with an external consumer). PARENA's own implementation is
+pure-PARENA-scaffolded, not FFI-bound to the reference LZ4 library — see `PARENA/stdlib/compress/
+lz4.prn` and `PARENA/STDLIB.md`'s own "compress/lz4" section for the real, current status.
+
+---
+
 ## Key Env Vars (shared across repos)
 
 ```
