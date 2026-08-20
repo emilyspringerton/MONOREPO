@@ -9,6 +9,12 @@
 # procedurally-drawn monochrome bitmap atlas with no path to color glyphs
 # at all -- this is real prerequisite infrastructure for the code change
 # that follows, not optional polish. EMILY/BACKLOG.md S189-18.
-set -euo pipefail
+#
+# Also installs JetBrains Mono (real, open, SIL OFL 1.1-licensed monospace
+# -- already named as the intended embedded font in PITVIPER/CLAUDE.md's
+# own Stack section, not a new pick) for the F11/F12 "shiny font" toggle,
+# founder real-time: "can you please find the nicest monospace public
+# domain font you can and add it on a toggle like f11 or f12" -> "keep the
+# og font for now" -> "and the toggle switches to the new shiny font".
 sudo apt-get update
-sudo apt-get install -y libsdl2-ttf-dev fonts-noto-color-emoji
+sudo apt-get install -y libsdl2-ttf-dev fonts-noto-color-emoji fonts-jetbrains-mono
