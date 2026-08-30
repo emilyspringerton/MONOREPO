@@ -37,6 +37,13 @@
 # and BACKLOG.md are the real source of truth a session should be reading
 # and following, not any particular wrapper script.
 #
+# --continue on every invocation, per THE_EMILY_WAY.md Principle 11 ("RSI AGI
+# Loop: Always --continue"): a session ended by a dropped connection should
+# resume with its prior context intact when re-run, not start blank -- the
+# same reason obs-watcher appends --continue to every RSI-cycle invocation.
+# Harmless on a genuinely first run (nothing to continue, claude just starts
+# fresh).
+#
 # Run:
 #   ./tmux-session.sh [session-name]
 
@@ -52,13 +59,13 @@ ONBOARDING='Check the sess file (/home/fatbaby/sess) for the current session id.
 # just do the two-step directly.
 if [ -n "${TMUX:-}" ]; then
   emily session new > sess
-  exec claude --dangerously-skip-permissions "$ONBOARDING"
+  exec claude --dangerously-skip-permissions --continue "$ONBOARDING"
 fi
 
 if ! command -v tmux >/dev/null 2>&1; then
   echo "tmux-session.sh: tmux not found on PATH -- falling back to a bare (non-survivable) session." >&2
   emily session new > sess
-  exec claude --dangerously-skip-permissions "$ONBOARDING"
+  exec claude --dangerously-skip-permissions --continue "$ONBOARDING"
 fi
 
 # Reuse an existing session of this name instead of erroring on collision --
@@ -69,7 +76,7 @@ if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
 fi
 
 tmux new-session -d -s "$SESSION_NAME" -c /home/fatbaby \
-  "emily session new > sess && exec claude --dangerously-skip-permissions \"$ONBOARDING\""
+  "emily session new > sess && exec claude --dangerously-skip-permissions --continue \"$ONBOARDING\""
 
 echo "tmux-session.sh: started detached tmux session '$SESSION_NAME'."
 echo "Attach with: tmux attach -t $SESSION_NAME"
