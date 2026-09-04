@@ -75,8 +75,32 @@ if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
   exec tmux attach -t "$SESSION_NAME"
 fi
 
-tmux new-session -d -s "$SESSION_NAME" -c /home/fatbaby \
-  "emily session new > sess && exec claude --dangerously-skip-permissions --continue \"$ONBOARDING\""
+# Real bug, found live (2026-09-04): the previous version of this line handed tmux a single,
+# inline command STRING containing `&&`, which tmux can only run by re-parsing it through a NEW
+# shell (`$SHELL -c "<string>"`) -- and that re-parse sees and evaluates any shell metacharacter
+# sitting inside $ONBOARDING's own already-substituted TEXT, not just the intended literal
+# prose. Confirmed directly: `` `emily observe` `` inside ONBOARDING's own real prose (Principle
+# 18's own citation) is genuine backtick command-substitution syntax to that second shell --
+# it silently executed `emily observe` (with no arguments) every time a new detached session
+# started, before claude ever saw its real prompt, corrupting the onboarding text with whatever
+# that stray call printed/errored. Double-quoting inside the outer string does NOT protect
+# against this -- double quotes suppress word-splitting/globbing, not command substitution.
+#
+# Real fix: write the startup steps to a real, standalone script file and point tmux at that
+# FILE (no shell operators in the string tmux itself parses), passing ONBOARDING through as a
+# real environment variable instead of interpolating its text into shell source at all -- env-var
+# expansion is a single, non-reparsing substitution, so backticks/$(...)/etc. inside the value
+# stay inert literal text no matter what the onboarding prose itself needs to say.
+STARTUP_SCRIPT="$(mktemp --suffix=.tmux-session-startup.sh)"
+cat > "$STARTUP_SCRIPT" <<'STARTUP_EOF'
+#!/usr/bin/env bash
+cd /home/fatbaby
+emily session new > sess
+exec claude --dangerously-skip-permissions --continue "$ONBOARDING"
+STARTUP_EOF
+chmod +x "$STARTUP_SCRIPT"
+
+ONBOARDING="$ONBOARDING" tmux new-session -d -s "$SESSION_NAME" -c /home/fatbaby "$STARTUP_SCRIPT"
 
 echo "tmux-session.sh: started detached tmux session '$SESSION_NAME'."
 echo "Attach with: tmux attach -t $SESSION_NAME"
