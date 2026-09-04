@@ -92,11 +92,12 @@ fi
 # expansion is a single, non-reparsing substitution, so backticks/$(...)/etc. inside the value
 # stay inert literal text no matter what the onboarding prose itself needs to say.
 STARTUP_SCRIPT="$(mktemp --suffix=.tmux-session-startup.sh)"
-cat > "$STARTUP_SCRIPT" <<'STARTUP_EOF'
+cat > "$STARTUP_SCRIPT" <<STARTUP_EOF
 #!/usr/bin/env bash
+rm -f "$STARTUP_SCRIPT"
 cd /home/fatbaby
 emily session new > sess
-exec claude --dangerously-skip-permissions --continue "$ONBOARDING"
+exec claude --dangerously-skip-permissions --continue "\$ONBOARDING"
 STARTUP_EOF
 chmod +x "$STARTUP_SCRIPT"
 
