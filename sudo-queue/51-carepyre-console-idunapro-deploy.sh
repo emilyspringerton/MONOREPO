@@ -13,6 +13,23 @@
 #
 # EINHORN_INDUSTRIAL's own internal ops keep running on the ORIGINAL IDUNA (:8080) exactly as
 # before -- this script does not touch that service at all.
+#
+# RUN THIS AS YOURSELF (fatbaby) -- NOT with `sudo ./51-....sh`. Same real convention every
+# other script in this queue follows (see run-all.sh's own header: "each one prompts for sudo
+# itself when it needs to") -- the individual `sudo` lines below (nginx config, reload) elevate
+# only the two steps that actually need root. Real, found-live reason this one bites harder than
+# most: `systemctl --user ...` needs a real per-user D-Bus session, which a `sudo`-wrapped shell
+# doesn't have ("Failed to connect to bus: No medium found") -- and running the whole script as
+# root also silently repoints every `~`/`$HOME` path (the built binary, the JWT secret file) at
+# /root instead of /home/fatbaby, which the systemd --user unit and its `%h`-based paths then
+# can't find either way.
+if [ "$(id -u)" -eq 0 ]; then
+  echo "ERROR: run this script as yourself (fatbaby), not via sudo -- see the header comment" >&2
+  echo "above for why. The individual sudo lines inside it will prompt for a password when" >&2
+  echo "they actually need one." >&2
+  exit 1
+fi
+
 set -euo pipefail
 
 echo "[1/6] Build the idunapro binary"
