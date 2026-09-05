@@ -32,6 +32,27 @@ fi
 
 set -euo pipefail
 
+# Real, found-live second bug (founder: "it doesnt work without sudo it doesnt work with
+# sudo"): even run as yourself, `systemctl --user` needs XDG_RUNTIME_DIR/
+# DBUS_SESSION_BUS_ADDRESS pointed at YOUR OWN real per-user bus socket
+# (/run/user/<your uid>/bus) -- these aren't reliably exported in every shell/session type
+# (tmux/screen re-attach, some SSH configs, etc. don't always re-run the PAM hooks that set
+# them), so this script sets them explicitly rather than trusting the ambient environment --
+# the exact same fix this session already had to apply by hand to restart iduna.service
+# earlier. If the socket genuinely doesn't exist yet (a real, different problem -- your user
+# systemd instance has never started), the check below says so and names the real fix
+# (`loginctl enable-linger $(whoami)`) instead of failing with an opaque bus error.
+export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+export DBUS_SESSION_BUS_ADDRESS="unix:path=${XDG_RUNTIME_DIR}/bus"
+if [ ! -S "${XDG_RUNTIME_DIR}/bus" ]; then
+  echo "ERROR: no user D-Bus session socket at ${XDG_RUNTIME_DIR}/bus." >&2
+  echo "Your systemd --user instance isn't running. Real fix: enable lingering for your own" >&2
+  echo "account (starts it now and keeps it running across logins/reboots), then re-run this" >&2
+  echo "script:" >&2
+  echo "  sudo loginctl enable-linger $(whoami)" >&2
+  exit 1
+fi
+
 echo "[1/6] Build the idunapro binary"
 cd /home/fatbaby/IDUNA_PRO
 GOWORK=off go build -o ~/.local/bin/idunapro .
