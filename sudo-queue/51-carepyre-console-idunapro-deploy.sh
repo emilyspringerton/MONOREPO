@@ -75,11 +75,19 @@ else
   echo "      already-deployed secret)"
 fi
 
-echo "[3/6] Install + start the systemd user unit"
+echo "[3/6] Install + (re)start the systemd user unit"
+# Real bug found live, 2026-09-05 (founder: "i see the option it says HTTP 404 when i click on
+# the option to unfurl it"): `enable --now` on a service that's ALREADY running does NOT restart
+# it -- it only starts it if stopped. Two separate "successful" deploys earlier the same day
+# silently left the OLD binary (from 20:50:35) serving requests the whole time, so every backend
+# change since then was invisible despite a clean build + a script that reported success. `enable`
+# (idempotent, sets it to start on boot) plus an explicit `restart` (idempotent too -- starts it
+# fresh if it wasn't running) is the real fix: always picks up whatever was just built.
 mkdir -p ~/.config/systemd/user
 cp /home/fatbaby/IDUNA_PRO/scripts/idunapro.service ~/.config/systemd/user/idunapro.service
 systemctl --user daemon-reload
-systemctl --user enable --now idunapro.service
+systemctl --user enable idunapro.service
+systemctl --user restart idunapro.service
 systemctl --user status idunapro.service --no-pager | head -8
 
 echo "[4/6] Push the CarePyre Console static page"
