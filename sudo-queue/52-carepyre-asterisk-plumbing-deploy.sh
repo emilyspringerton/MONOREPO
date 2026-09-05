@@ -16,10 +16,9 @@
 #                                 Twilio's side, not the other way around)
 #   extensions_carepyre.conf   -- the dialplan connecting the two
 #
-# STILL NEEDED FROM YOU (real, cannot be automated without your Twilio account existing yet):
-# see PARENA/docs/TWILIO_SETUP_CHECKLIST.md for the exact Twilio Console steps once you've
-# signed up -- this script leaves __TWILIO_TRUNK_DOMAIN__ as a real, visible placeholder in the
-# deployed config until you run this script's own follow-up sed (printed at the end).
+# Real Twilio trunk already provisioned (2026-09-05, kanban TWILLIO-OPS-12433, via the API
+# once Trust Hub compliance cleared): domain carepyre.pstn.twilio.com is baked directly into
+# ops/asterisk/pjsip_twilio_trunk.conf now, not a placeholder -- no manual fill-in step needed.
 set -euo pipefail
 
 ASTERISK_CONF_DIR=/etc/asterisk
@@ -31,8 +30,7 @@ PHONE_SECRET="$(openssl rand -hex 16)"
 sed "s/__CAREPYRE_PHONE_SECRET__/${PHONE_SECRET}/" \
   "${REPO_ASTERISK_DIR}/pjsip_carepyre_phone.conf" | sudo tee "${ASTERISK_CONF_DIR}/pjsip_carepyre_phone.conf" > /dev/null
 
-echo "[2/6] Copy the Twilio trunk + dialplan config as-is (real placeholder domain still in"
-echo "      pjsip_twilio_trunk.conf until you have a real Twilio trunk to fill it in with)"
+echo "[2/6] Copy the Twilio trunk + dialplan config (real, live trunk domain already baked in)"
 sudo cp "${REPO_ASTERISK_DIR}/pjsip_twilio_trunk.conf" "${ASTERISK_CONF_DIR}/pjsip_twilio_trunk.conf"
 sudo cp "${REPO_ASTERISK_DIR}/extensions_carepyre.conf" "${ASTERISK_CONF_DIR}/extensions_carepyre.conf"
 sudo chown asterisk:asterisk "${ASTERISK_CONF_DIR}"/pjsip_carepyre_phone.conf \
@@ -65,8 +63,6 @@ echo "  Port:     5060, UDP"
 echo "  Username: 1000"
 echo "  Password: ${PHONE_SECRET}"
 echo ""
-echo "Done. Once you have a real Twilio Elastic SIP Trunk (see"
-echo "PARENA/docs/TWILIO_SETUP_CHECKLIST.md for the exact Console steps), fill in the real"
-echo "domain with:"
-echo '  sudo sed -i "s/__TWILIO_TRUNK_DOMAIN__/yourtrunkname.pstn.twilio.com/" /etc/asterisk/pjsip_twilio_trunk.conf'
-echo '  sudo asterisk -rx "pjsip reload"'
+echo "Done. The real Twilio trunk (carepyre.pstn.twilio.com, number +17855315546) is already"
+echo "wired in -- call extension 1000 with a softphone registered above, or dial a real US"
+echo "number from it to test outbound via Twilio."
