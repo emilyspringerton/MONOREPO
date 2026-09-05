@@ -66,6 +66,7 @@ if [ ! -f ~/.config/idunapro/env ]; then
 JWT_SECRET=${JWT_SECRET}
 JWT_ISSUER=https://carepyre-console.internal
 ADDR=:8081
+BASE_URL=https://carepyre.org/console-api
 EOF
   chmod 600 ~/.config/idunapro/env
   echo "      wrote a new ~/.config/idunapro/env (real secret generated, not printed here)"
