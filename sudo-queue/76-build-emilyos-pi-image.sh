@@ -65,15 +65,30 @@ echo "== 3. re-run the package post-install/trigger scripts + service registrati
        root-lessly, now under a real chroot =="
 sudo chroot "$ROOTFS" /bin/sh -c 'apk fix' \
   || echo "NOTE: 'apk fix' inside chroot reported issues — read its output before trusting this image."
+# REAL, LIVE-FOUND GAP fixed here (found the same pass as cmdline.txt's own missing `root=`,
+# below): this rc-update list was missing `root`/`fsck`/`localmount`/`swap`/`seedrng` entirely —
+# real, standard Alpine boot-runlevel services (confirmed present in the built rootfs's own
+# /etc/init.d/, not guessed) that a disk-installed system genuinely needs: `root` remounts the
+# kernel-mounted (real, `rootflags=rw` on cmdline.txt now) root filesystem per fstab options and
+# runs any pending fsck; `fsck`/`localmount` check and mount everything ELSE in /etc/fstab (only
+# /boot here); `swap`/`seedrng` are real, standard, safe-as-no-ops-if-unconfigured additions
+# matching Alpine's own documented default boot runlevel.
 sudo chroot "$ROOTFS" /sbin/rc-update add devfs sysinit
 sudo chroot "$ROOTFS" /sbin/rc-update add dmesg sysinit
 sudo chroot "$ROOTFS" /sbin/rc-update add mdev sysinit
+sudo chroot "$ROOTFS" /sbin/rc-update add sysfs sysinit
 sudo chroot "$ROOTFS" /sbin/rc-update add hwclock boot
 sudo chroot "$ROOTFS" /sbin/rc-update add modules boot
 sudo chroot "$ROOTFS" /sbin/rc-update add sysctl boot
 sudo chroot "$ROOTFS" /sbin/rc-update add hostname boot
 sudo chroot "$ROOTFS" /sbin/rc-update add bootmisc boot
 sudo chroot "$ROOTFS" /sbin/rc-update add syslog boot
+sudo chroot "$ROOTFS" /sbin/rc-update add root boot
+sudo chroot "$ROOTFS" /sbin/rc-update add fsck boot
+sudo chroot "$ROOTFS" /sbin/rc-update add localmount boot
+sudo chroot "$ROOTFS" /sbin/rc-update add swap boot
+sudo chroot "$ROOTFS" /sbin/rc-update add seedrng boot
+sudo chroot "$ROOTFS" /sbin/rc-update add loopback boot
 sudo chroot "$ROOTFS" /sbin/rc-update add dhcpcd default
 sudo chroot "$ROOTFS" /sbin/rc-update add sshd default
 sudo chroot "$ROOTFS" /sbin/rc-update add chronyd default
