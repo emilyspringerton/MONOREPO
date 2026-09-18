@@ -191,6 +191,151 @@ lz4.prn` and `PARENA/STDLIB.md`'s own "compress/lz4" section for the real, curre
 
 ---
 
+## Principle 21: CONSTRUCT Files — Deterministic Source Snapshots (standing, monorepo-wide)
+
+**Every repo with a release pipeline must generate and publish a CONSTRUCT file on each master/main push.** A CONSTRUCT is a deterministic, byte-for-byte reproducible concatenation of all tracked source files in the repo, sorted in a canonical order, with clear delimiters between files. This serves as:
+
+- **Offline source archive** — all code in one plaintext file, human-readable, no git required
+- **Audit trail** — exact file list + metadata (SHA256, size, git mode) per build
+- **Reproducibility proof** — same git tree always produces identical CONSTRUCT output, across runners/timestamps/machines
+- **Release artifact** — bundled into GitHub Releases alongside binaries
+
+### Generation Pattern
+
+Use one of two approaches based on your toolchain:
+
+**Option A: Git-based (recommended for determinism)**  
+Use `git ls-files` to capture exactly what's tracked, exclude generated files:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+export LC_ALL=C
+OUT="${1:-REPO_CONSTRUCT.txt}"
+TREE_SHA="$(git rev-parse --verify HEAD^{tree})"
+TMP_FILES="$(mktemp)"
+trap 'rm -f "$TMP_FILES"' EXIT
+
+git ls-files -z \
+  ':(exclude)REPO_CONSTRUCT*.txt' \
+  ':(exclude)MANIFEST*.txt' \
+  ':(exclude).git/**' \
+  ':(exclude)vendor/**' \
+  ':(exclude)node_modules/**' \
+  ':(exclude)build/**' \
+  ':(exclude)dist/**' \
+  | sort -z > "$TMP_FILES"
+
+{
+  printf 'REPO CONSTRUCT\n'
+  printf 'tree_sha: %s\n' "$TREE_SHA"
+  printf '\n'
+} > "$OUT"
+
+while IFS= read -r -d '' file; do
+  [ -f "$file" ] || continue
+  SHA="$(sha256sum "$file" | awk '{print $1}')"
+  SIZE="$(wc -c < "$file")"
+  {
+    printf -- '--- FILE START: %s ---\n' "$file"
+    printf 'sha256: %s\nsize_bytes: %s\n' "$SHA" "$SIZE"
+    printf -- '--- CONTENT START ---\n'
+    cat "$file"
+    printf '\n--- CONTENT END ---\n'
+    printf -- '--- FILE END: %s ---\n' "$file"
+    printf '\n'
+  } >> "$OUT"
+done < "$TMP_FILES"
+```
+
+**Option B: Filesystem walk (simpler, less deterministic)**  
+For repos without git tracking requirements or local testing:
+
+```bash
+OUT="REPO_CONSTRUCT.txt"
+echo "REPO BUILD ${{ github.run_number }} CONSTRUCT" > "$OUT"
+FILES=$(find . -type f \( -name "*.c" -o -name "*.h" -o -name "*.go" -o -name "*.md" \) \
+  ! -path "*/.git/*" ! -path "*/vendor/*" ! -path "*/build/*" | sort)
+for file in $FILES; do
+  echo "--- FILE START: $file ---" >> "$OUT"
+  cat "$file" >> "$OUT"
+  echo "" >> "$OUT"
+  echo "--- FILE END: $file ---" >> "$OUT"
+  echo "" >> "$OUT"
+done
+```
+
+### CI/CD Integration
+
+**GitHub Actions pattern (SHANKPIT precedent):**
+
+```yaml
+- name: Generate Source Construct
+  shell: bash
+  run: |
+    set -euo pipefail
+    bash scripts/generate_construct.sh REPO_CONSTRUCT.txt
+    # Verify determinism on the second run
+    bash scripts/generate_construct.sh REPO_CONSTRUCT.txt.check
+    if ! cmp REPO_CONSTRUCT.txt REPO_CONSTRUCT.txt.check; then
+      echo "ERROR: CONSTRUCT not deterministic!"
+      diff REPO_CONSTRUCT.txt REPO_CONSTRUCT.txt.check || true
+      exit 1
+    fi
+
+- name: Bundle Artifacts
+  shell: bash
+  run: |
+    mkdir -p release
+    cp REPO_CONSTRUCT.txt release/
+    # Copy other built artifacts (binaries, libs, etc.)
+    zip -r "release_build_${{ github.run_number }}.zip" release/
+
+- name: Upload & Release
+  env:
+    GH_TOKEN: ${{ github.token }}
+  run: |
+    # Tag and create GitHub Release
+    NEXT_VERSION="v$(date +%Y.%m.%d)"
+    git tag "$NEXT_VERSION"
+    git push origin "$NEXT_VERSION"
+    gh release create "$NEXT_VERSION" \
+      release_build_*.zip \
+      REPO_CONSTRUCT.txt \
+      --title "$NEXT_VERSION"
+```
+
+### Verification
+
+Every CONSTRUCT file should:
+- ✓ Be byte-for-byte identical on two consecutive runs with the same git tree
+- ✓ Include a tree_sha field matching `git rev-parse HEAD^{tree}`
+- ✓ List files in alphabetically sorted order (use `sort -z` for null-delimited; `sort` for newline)
+- ✓ Exclude generated outputs: build/, dist/, node_modules/, vendor/, .git/, .construct files themselves
+- ✓ Include clear delimiters (--- FILE START/END) so boundaries are unambiguous even if a file lacks a trailing newline
+- ✓ Never include secrets (credentials, .env files, private keys)
+
+### Real Implementation Examples
+
+- **SHANKPIT**: `SHANKPIT/.github/workflows/release.yml` (lines 165–197) — filesystem walk, includes a phase label
+- **IDUNA**: `IDUNA/scripts/generate_iduna_construct.sh` — git ls-files, with base64 encoding for binary files
+- **BRAWLPIT**: `BRAWLPIT/scripts/build_construct.py` — Python walk, minimal header
+
+See these live repos for tested, working patterns. Copy the approach closest to your language/CI setup.
+
+### Repo Checklist
+
+When adding CONSTRUCT generation to a repo:
+
+1. **Create `scripts/generate_construct.sh` (or language equivalent)** — git ls-files version preferred
+2. **Verify determinism** — run twice locally, confirm byte-for-byte match
+3. **Wire into CI** — add "Generate Construct" step to release workflow, before artifact upload
+4. **Add to release artifacts** — include CONSTRUCT file in GitHub Release assets
+5. **Update CLAUDE.md** — note in the repo's own CLAUDE.md that CONSTRUCT files are auto-generated; no manual edit
+6. **No .gitignore** — do NOT add `*_CONSTRUCT.txt` to `.gitignore` — the file in the release artifacts is the source of truth, but it's ok for it to exist locally during builds
+
+---
+
 ## Key Env Vars (shared across repos)
 
 ```
