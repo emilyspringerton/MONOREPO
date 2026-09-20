@@ -1,0 +1,11 @@
+go 1.26.8
+
+use (
+	./EDIS
+	./EMILY/emily-agent
+	./IDUNA
+	./PRRJECT_FATBABY
+	./SHANKPIT
+	./emily.cli
+	./gpt2-alpine-c
+)
