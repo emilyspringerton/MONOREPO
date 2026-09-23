@@ -12,4 +12,4 @@
 # certbot) this script does not perform.
 set -euo pipefail
 mkdir -p /var/www/wotan
-rsync -a --delete /home/fatbaby/WOTAN/ /var/www/wotan/ --exclude='.git' --exclude='ops'
+rsync -a --chmod=D755,F644 --delete /home/fatbaby/WOTAN/ /var/www/wotan/ --exclude='.git' --exclude='ops'
