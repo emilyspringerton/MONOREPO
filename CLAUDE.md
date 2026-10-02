@@ -181,6 +181,14 @@ from every commit message despite Apples/CHANGELOG already carrying it).
 
 **8. Always commit and push — standing instruction, do not wait to be asked.** When a unit of work is complete (tests pass, feature works, docs updated), commit and push immediately. This is the default behavior in every repo in this monorepo, not an exception that needs re-requesting each session. Only hold off if the user explicitly says to pause on committing for that specific piece of work.
 
+**9. Kanban in the loop — standing instruction, all repos** (founder real-time, 2026-10-02). After the founder-observation step (1a), work is driven from the kanban (IDUNA `/api/v1/kanban/cards`, board at `/admin/kanban`), not picked ad hoc:
+- **Always work from the kanban.** Only work cards in the **priority** queue.
+- **New founder request → intake into BACKLOG.md, then move a card into priority before working.** Order is: observe → backlog intake → card into priority → work. Never start work on a request that has no priority card.
+- **Large or planning-heavy task → plan it, don't just start.** Write the plan, create the cards it needs, put them in priority, then work through all of them **in the same turn/sprint**. Same when the founder places a large card in priority: when processing the priority queue, plan the cards it requires, put them in priority, and complete them in that sprint.
+- **Pending lane (new).** As each card is finished, move it to the **pending** queue — not straight to done. At sprint end, check everything in pending into **done** in one pass (`PATCH {"queue":"done"}` — archives the BACKLOG.md line and files the completion Apple, so rule 2 still holds).
+- **Large sprint → check in incrementally:** check cards into done as they enter pending rather than waiting for the end.
+- Rules 1–8 are unchanged: founder direction still always lands in BACKLOG.md, Apple before done, commit and push as you go.
+
 ---
 
 ## Compression Convention (standing, monorepo-wide)
