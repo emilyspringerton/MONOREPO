@@ -8,6 +8,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The `/home/fatbaby` directory is the EINHORN_INDUSTRIAL monorepo home. It is not a single project — it is a collection of repos sharing a Go workspace and a common operating procedure ("The Emily Way"). For a grouped, synthesized read of what's below — real cross-cutting themes, not just a flat list — see `EMILY/docs/ECOSYSTEM_CONTINUITY_REPORT.md`; this table below stays the authoritative, line-by-line source both docs are kept in sync against.
 
+**New or rebuilt box? Read `BOOTSTRAP.md` first** — how to reach IDUNA (port-forward, NOT `iam.okemily.com`; and `gcloud config set project`), the cluster/project names, and known path gaps.
+
 **Before starting any work, read `EMILY/BACKLOG.md`.** Pick the highest-priority unchecked item in the lowest-numbered open section. This is not optional.
 
 ---
