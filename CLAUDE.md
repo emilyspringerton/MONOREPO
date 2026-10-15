@@ -445,3 +445,18 @@ always implement the core deps in PARENA first."*
 - **Not a license to reimplement the OS.** Core deps = what the product's own behavior depends on.
   Compilers, kernels, system libraries and the like stay as-is; a repo's own CLAUDE.md may record a
   considered, specific exception (same standard as the LZ4 compression convention).
+
+## Git Identity (standing, every box)
+
+Commit as **Emily Springerton <emilyspringerton@gmail.com>** (the author of nearly all history in
+every repo here). A fresh box has no identity configured — set it per repo before the first commit:
+
+```bash
+for r in . EMILY IDUNA WOTAN PARENA SHANKPIT BRAWLPIT; do
+  git -C "$r" config user.name "Emily Springerton"
+  git -C "$r" config user.email "emilyspringerton@gmail.com"
+done
+```
+
+Push over SSH (`git@github.com:emilyspringerton/<REPO>.git`) works from the box's own key. Sync
+(commit + push) at the end of every turn — a box can vanish at any time (founder, 2026-10-15).
