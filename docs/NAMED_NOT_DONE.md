@@ -58,7 +58,7 @@ Legend: **[C]** closable and checkable here · **[T]** needs a toolchain this bo
 |---|---|---|
 | G1 | **No job is applied to a live match.** The stat bridge exists and is tested, but no call site reads it — a player is 100 HP and stock ROF whatever a save says. | [C] |
 | ~~G2~~ | ~~**Allies don't spend or earn EMPIRE influence** on spawn, or when banking gathered resources.~~ — **closed 2026-10-31** at three seams: the rule is in PARENA (`empire-bank-credit`, tested), the hand-in is `story_ai_bank_handins` (verified by a real server link), and the lobby credits it. The lobby line itself was never compiled here — see §4. | [C] |
-| G3 | **No wave spawner** that emits authored archetypes on a timer for zombies/survival modes. | [C] |
+| ~~G3~~ | ~~**No wave spawner** that emits authored archetypes on a timer.~~ — **scheduler shipped 2026-10-31** (`wave_rules.prn` + `wave_spawner.h` + `story_ai_waves_tick`, 64 checks); the host's arming call is still unwritten. See §4. | [C] |
 | G4 | **No downed-and-revived state** — allies die outright instead of being rescuable. | [C] |
 | G5 | **Nothing persists** — a character's job/level doesn't survive a restart; a dungeon's difficulty tier is generated but not fed into any stat curve. | [C] |
 | G6 | **Tech tree is one node with a flat XP ratio** (500/point, no curve), and the bonus is in-process only, so a server-authoritative match wouldn't see levels. | [C] |
@@ -149,7 +149,7 @@ Ordered by what this box can actually finish. Status moves only when a check run
 - [ ] N1 kit-call packet (net path)
 - [ ] N3 zone packet for co-op
 - [x] G2 allies spend/earn EMPIRE influence — closed 2026-10-31, see §4
-- [ ] G3 authored wave spawners on a timer
+- [x] G3 authored wave spawners on a timer — scheduler + seam shipped 2026-10-31, arming call open (§4)
 - [ ] G4 downed-and-revived allies
 - [x] W1 floor-size-aware upper-floor population — closed 2026-10-31, see §4
 - [ ] W7 structure graph hooked into detached pieces
@@ -164,6 +164,24 @@ Blocked on a toolchain, listed so they stop looking forgotten: A1, I1, I2, I7 (G
 R6, A3 (GPU/display), E7 (mingw), and everything in §2.8 (founder call).
 
 ## 4. Progress log
+
+### 2026-10-31 — G3, the wave scheduler (PARENA + SHANKPIT)
+
+`wave_rules.prn` owns the schedule (20 s first wave, 45 s interval, −3 s per wave to a 15 s floor, size 3
+growing to 8) and `wave-should-spawn`. `wave_spawner.h` is the timer: pure, time passed in, and it **leaves
+a wave due when the live cap blocks it** rather than advancing — the failure that would quietly end a
+survival mode early. `story_ai_waves_tick` spawns the PARENA archetype through `story_ai_spawn_unit` on a
+30-unit ring around the origin.
+
+**Verified:** `make test-wave-spawner` **64 checks, 0 failed** (parity of every number against the generated
+copy, cap-holds-the-wave, backwards clock, and a 100 000-second session that stops at exactly 8 waves);
+`make -B server` links the seam. The first version of this test did not compile at all — its `ok()` helper
+took no format arguments and one assertion compared a variable to itself, which `-Werror` caught before the
+test could ever pass vacuously.
+**Still open:** the arming call. `story_ai_waves_enable(1, now_ms)` is the whole toggle, and I deliberately
+did not guess which mode should call it — turning waves on for every level would change existing maps
+silently, which is a founder/gameplay decision, not a mechanical one. The ring is also around the world
+origin, not level-authored.
 
 ### 2026-10-31 — toolchain unblock 2: the headless server links here
 
