@@ -57,7 +57,7 @@ Legend: **[C]** closable and checkable here · **[T]** needs a toolchain this bo
 | # | Gap | Flags |
 |---|---|---|
 | G1 | **No job is applied to a live match.** The stat bridge exists and is tested, but no call site reads it — a player is 100 HP and stock ROF whatever a save says. | [C] |
-| G2 | **Allies don't spend or earn EMPIRE influence** on spawn, or when banking gathered resources. | [C] |
+| G2 | **Allies don't spend or earn EMPIRE influence** on spawn, or when banking gathered resources. *Rule shipped 2026-10-31 in PARENA (`empire-bank-credit`, tested); the host call site is still open — see §4.* | [C] |
 | G3 | **No wave spawner** that emits authored archetypes on a timer for zombies/survival modes. | [C] |
 | G4 | **No downed-and-revived state** — allies die outright instead of being rescuable. | [C] |
 | G5 | **Nothing persists** — a character's job/level doesn't survive a restart; a dungeon's difficulty tier is generated but not fed into any stat curve. | [C] |
@@ -164,6 +164,31 @@ Blocked on a toolchain, listed so they stop looking forgotten: A1, I1, I2, I7 (G
 R6, A3 (GPU/display), E7 (mingw), and everything in §2.8 (founder call).
 
 ## 4. Progress log
+
+### 2026-10-31 — toolchain unblock: PARENA builds here, so `regen-*` works
+
+Every PARENA-derived number in SHANKPIT (`empire_rules.c`, `material_rules.c`, `slide_rules.c`, …) is
+*generated*, and the generator needs PARENA's own compiler. With no bazel on this box that looked like a
+dead end; it wasn't. `make .parena-bootstrap` builds the compiler with the system `gcc` in one pass
+(one pre-existing warning, `is_pointer_c_type` unused in `src/emit.c`), and
+`SHANKPIT/scripts/gen_empire_rules.sh` then regenerates `empire_rules.c` **byte-identically** to the
+committed file. That identity check is the point: it means the checked-in generated C really is this
+compiler's output, so a diff after a rule change can only be the rule.
+
+This converts the whole "PARENA-first" standing rule from an aspiration into something executable here,
+and it is why G2's decision half could start at all.
+
+### 2026-10-31 — G2, decision half (PARENA + SHANKPIT)
+
+`empire-rules.prn` gained `empire-influence-per-banked-unit` (1:1 — one rifleman is 25 banked units) and
+`empire-bank-credit(carrying, influence, cap)`, which returns what *fits* rather than performing the
+addition, so a full pool clamps instead of eating a hauler's cargo. Eight assertions in
+`make test-empire-rules`, including the round trip: banking a rifleman's worth actually buys a rifleman.
+
+**Still open:** the host. `g_empire_influence` is debited at spawn and never credited at a bank, and
+`eu_world_gather` credits the faction stockpile at gather time rather than at hand-in, so the pairing
+needs a bank call site in `story_ai.c`'s gather path. The lobby cannot be syntax-checked here (no SDL2), so
+that slice needs the display/toolchain branch, not a blind edit.
 
 ### 2026-10-31 — W1 closed (SHANKPIT)
 
