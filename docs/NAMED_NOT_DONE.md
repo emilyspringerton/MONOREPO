@@ -101,7 +101,7 @@ Legend: **[C]** closable and checkable here · **[T]** needs a toolchain this bo
 
 | # | Gap | Flags |
 |---|---|---|
-| W1 | **Upper floors get one zombie each regardless of floor size** — a 60×20 and a 20×60 floor are treated the same. | [C] |
+| ~~W1~~ | ~~**Upper floors get one zombie each regardless of floor size**~~ — **closed 2026-10-31**: a storey's own deck area now decides who earns a second body (`DECK_AREA_PER_ZOMBIE`, largest decks first until the 69-slot budget is spent), and `--check` asserts it. See §4. | [C] |
 | W2 | **A themed interior repeats on every storey** — a six-floor cafe is a cafe on all six, never thinning upstairs. | [C] |
 | W3 | **No district simulation**, so the EMPIRE minimap honestly shows only the block you stand on. | [C] |
 | W4 | **The live "nextown" level comes from the zombies registry** when online, so a connected run serves the registry's copy until it's re-exported. | [C] |
@@ -151,7 +151,7 @@ Ordered by what this box can actually finish. Status moves only when a check run
 - [ ] G2 allies spend/earn EMPIRE influence
 - [ ] G3 authored wave spawners on a timer
 - [ ] G4 downed-and-revived allies
-- [ ] W1 floor-size-aware upper-floor population
+- [x] W1 floor-size-aware upper-floor population — closed 2026-10-31, see §4
 - [ ] W7 structure graph hooked into detached pieces
 - [ ] E3 mirror material authorable in the level/material list
 - [ ] E1 NOCK placement UI for nodes and claim cells
@@ -163,7 +163,31 @@ Ordered by what this box can actually finish. Status moves only when a check run
 Blocked on a toolchain, listed so they stop looking forgotten: A1, I1, I2, I7 (Go/SDL2), R2, R3, R5,
 R6, A3 (GPU/display), E7 (mingw), and everything in §2.8 (founder call).
 
+## 4. Progress log
+
+### 2026-10-31 — W1 closed (SHANKPIT)
+
+`tools/build_loft_city.py` asked for population per **floor** and never per **deck**, so a full 254×68
+pair deck and the 254×34 stepped-back storey above it in the same building each got exactly one body.
+`population_plan` now takes the levels, measures every storey's own deck (`storey_deck_areas`, the same
+predicate the placement loop uses), staffs every upper floor once as before, and then deals the spare
+slots out one building at a time — the deck picks *which floor* inside a building, the round-robin
+picks *which building* — until `NPC_BUDGET` (69, the engine's own simultaneous-character ceiling) is
+spent. The city goes from 61 authored characters to **69**, one extra loft body per building.
+
+Two versions of this rule were wrong before one was right, and both were caught by checks rather than
+by reading it back: the first assertion counted ground floors (two by design, not by area) as
+deck-earned, and the first allocator handed all eight spare slots to `loft_a`/`loft_b` because every
+full pair deck measures the same 21964 and the sort fell through to the name. That is why the split is
+stated as it is: **area decides the floor, spread decides the building.**
+
+**Not done, named:** still no window on this box, so the extra bodies are verified as authored data
+and a clean parse, never watched fighting; the second body on a floor shares that floor's four
+corner spots, so a 254×68 deck still fields at most two; and the population is still authored statically
+— no wave spawner (G3) reads this plan.
+
 ## History
 
+- 2026-10-31: W1 closed; see §4.
 - 2026-10-31: opened. 45 open items across seven subsystems, extracted from the previous session's
   own named-not-done sections and cross-checked against its later turns for work that shipped.
