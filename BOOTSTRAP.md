@@ -4,6 +4,10 @@ Written 2026-10-14 for the next Claude. The founder rebuilds this VM from scratc
 forgets to mention a step or two. A prior session burned a lot of time on exactly the two traps
 below — read this before trying to authenticate to anything.
 
+**This doc starts at step 0 = "the repos are already cloned."** If the box is genuinely fresh, do
+`docs/ENVIRONMENT_BOOTSTRAP.md` first — toolchain plus the full clone list (the four `go.work`
+modules that are easy to miss: `EDIS`, `PRRJECT_FATBABY`, `emily.cli`, `gpt2-alpine-c`).
+
 ## TL;DR — the two traps
 
 1. **`iam.okemily.com` is NOT how agents reach IDUNA.** It's the human SSO login domain
@@ -84,8 +88,9 @@ emily apples post -t completion -r EMILY --run-id "$(emily session current)" "<t
   `mkdir /home/fatbaby: permission denied` (no sudo). Workaround: build a tag by hand,
   `sess-$(date -u +%Y%m%d-%H%M)-$(openssl rand -hex 4)`, and pass `--run-id`. Real fix:
   `sudo ln -s /home/ubuntu/MONOREPO /home/fatbaby`.
-- **Workspace gaps:** `go.work` lists `EDIS`, `PRRJECT_FATBABY`, `gpt2-alpine-c`, which aren't
-  cloned, so any workspace-mode `go` command fails. Use `GOWORK=off` inside a module, or clone them.
+- **Workspace gaps:** `go.work` lists `EDIS`, `PRRJECT_FATBABY`, `emily.cli`, `gpt2-alpine-c`, which
+  weren't cloned, so any workspace-mode `go` command failed. Fix is to actually clone them — the loop
+  is in `docs/ENVIRONMENT_BOOTSTRAP.md` §3; `GOWORK=off` only papers over it per-module.
 - The default `IDUNA_BASE_URL` is `http://localhost:8080`; always override it (see step 4).
 
 ## History
