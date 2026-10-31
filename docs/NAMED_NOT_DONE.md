@@ -78,7 +78,7 @@ Legend: **[C]** closable and checkable here · **[T]** needs a toolchain this bo
 
 | # | Gap | Flags |
 |---|---|---|
-| R1 | **Mirror material exists as a draw function but nothing selects it** — `draw_material_mirror_box` waits for a material kind. Sphere map means no parallax and no true reflection. | [C] for the material kind (level data); [V] for the GL path |
+| R1 | **Mirror material exists as a draw function but nothing selects it** — `draw_material_mirror_box` waits for a material kind. **Authoring half closed 2026-10-31** (E3: `material_draw.h` + the mirror pass in `draw_map`); the sphere-map limits stand — no parallax, no true reflection. | [C] for the material kind (level data) — done; [V] for the GL path |
 | R2 | **No probe bake, no UV-offset draw path, no palette shader, no tint quad wiring** for the Doom/Quake/HL/GTA material vocabulary. | [V] |
 | R3 | **A lightning flash doesn't push exposure/bleed**; the litbox shader still takes cone/uniform values rather than a per-pixel environment term. | [V] |
 | R4 | **Bedrock Racers' stadium is in no scene** — mesh built, nothing loads or draws it, no car clamped to it, no collision response, no goal shafts in the SDF, no faceted OBB destruction shell. | [C] load+clamp / [V] draw |
@@ -91,7 +91,7 @@ Legend: **[C]** closable and checkable here · **[T]** needs a toolchain this bo
 |---|---|---|
 | E1 | **No NOCK placement UI for EMPIRE resource nodes or claim cells** — schema, loader, serializer and both hosts are done, so authoring them means hand-editing JSON. | [C] |
 | E2 | **local_nock can't edit the recursive lofts tree** — `LevelStore` is flat and `validate_level` requires `walls`, so sub-levels and `objects` are files plus a builder run; there's no object *placement* tool either. | [C] |
-| E3 | **The material list can't author mirrors** (see R1). | [C] |
+| ~~E3~~ | ~~**The material list can't author mirrors** (see R1).~~ — **closed 2026-10-31**: `material_draw.h` is the missing selection rule, `draw_map` collects and draws mirrors, `make test-material-draw` green. See §4. | [C] |
 | E4 | **The NPC kit dropdown doesn't list imported skin sets** — an NPC's number is typed by hand from the startup log. | [C] |
 | E5 | **No wiring UI for the circuit** — pins are a table of indexes in JSON. | [C] |
 | E6 | **No port picker for the NOCK tile** — it always uses 8787. | [C] |
@@ -153,7 +153,7 @@ Ordered by what this box can actually finish. Status moves only when a check run
 - [x] G4 downed-and-revived allies — closed 2026-10-31, see §4
 - [x] W1 floor-size-aware upper-floor population — closed 2026-10-31, see §4
 - [x] W7 structure graph hooked into detached pieces — checked 2026-10-31: already wired and covered by `test-brick-world`, see §4
-- [ ] E3 mirror material authorable in the level/material list
+- [x] E3 mirror material authorable in the level/material list — closed 2026-10-31, see §4
 - [ ] E1 NOCK placement UI for nodes and claim cells
 - [ ] I3 kill DEADWEIGHT's hand-copied `GUI_SRC` list
 - [ ] I5 lobby APPS page explains *why* an app is missing
@@ -164,6 +164,25 @@ Blocked on a toolchain, listed so they stop looking forgotten: A1, I1, I2, I7 (G
 R6, A3 (GPU/display), E7 (mingw), and everything in §2.8 (founder call).
 
 ## 4. Progress log
+
+### 2026-10-31 — E3, a level can author a mirror (SHANKPIT)
+
+The mirror was the mirror image of a missing seam: `draw_material_mirror_box` existed, PARENA already rated the
+mirror 900 permille, and neither was reachable, because no rule ever said *which material is drawn by which pass*. A
+doc that named a mirror got an ordinary brick-textured box. `packages/render/material_draw.h` is that rule and
+nothing else — pure C, no GL, keyed off the **shader** name (the way glass already was, rather than a second
+vocabulary), closed and lowercase so `"Mirror"` is a typo that falls back to a visible wall instead of silently
+inventing a fourth kind. `draw_map` collects mirrors, painter-sorts them, and draws them after the glass pass;
+the specular pass never sees them, since a glint on top of a reflection is a second, wrong hypothesis.
+
+**Verified:** `make test-material-draw`, all checks passed under ASan+UBSan on `-Wall -Wextra -Werror` — three
+words to three distinct paths, `SHADER_NAME_*` still spelling what the renderer compares against, null / empty /
+unknown / capitalised / trailing-space names falling back to opaque, only glass and mirror deferred, and the PARENA
+ordering mirror 900 > metal 380 > glass 320 > 0 with an out-of-range kind reflecting nothing.
+
+**Still open:** the GL draw has never run — no GPU, no SDL2, no GL headers here — so the lobby code that collects
+and draws the mirrors is compiled by nothing on this box. R1's parallax limit also stands: a sphere map reads as
+polished chrome, not a true mirror.
 
 ### 2026-10-31 — N1, the kit call on the wire (SHANKPIT)
 
@@ -296,6 +315,7 @@ corner spots, so a 254×68 deck still fields at most two; and the population is 
 
 ## History
 
+- 2026-10-31: E3 closed (mirror material authorable); R1's authoring half noted done, its GL/parallax limits still open.
 - 2026-10-31: N1 closed (kit call on the wire). W7 checked and found already wired; closed with evidence.
 - 2026-10-31: W1 closed; see §4.
 - 2026-10-31: opened. 45 open items across seven subsystems, extracted from the previous session's
