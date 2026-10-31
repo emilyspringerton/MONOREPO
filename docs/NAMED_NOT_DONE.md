@@ -59,7 +59,7 @@ Legend: **[C]** closable and checkable here · **[T]** needs a toolchain this bo
 | G1 | **No job is applied to a live match.** The stat bridge exists and is tested, but no call site reads it — a player is 100 HP and stock ROF whatever a save says. | [C] |
 | ~~G2~~ | ~~**Allies don't spend or earn EMPIRE influence** on spawn, or when banking gathered resources.~~ — **closed 2026-10-31** at three seams: the rule is in PARENA (`empire-bank-credit`, tested), the hand-in is `story_ai_bank_handins` (verified by a real server link), and the lobby credits it. The lobby line itself was never compiled here — see §4. | [C] |
 | ~~G3~~ | ~~**No wave spawner** that emits authored archetypes on a timer.~~ — **scheduler shipped 2026-10-31** (`wave_rules.prn` + `wave_spawner.h` + `story_ai_waves_tick`, 64 checks); the host's arming call is still unwritten. See §4. | [C] |
-| G4 | **No downed-and-revived state** — allies die outright instead of being rescuable. | [C] |
+| ~~G4~~ | ~~**No downed-and-revived state** — allies die outright instead of being rescuable.~~ — **shipped 2026-10-31**: bleed-out window, revive hold and partial restore in PARENA; the respawn is held by `story_ai_downed_tick`, allies only. See §4. | [C] |
 | G5 | **Nothing persists** — a character's job/level doesn't survive a restart; a dungeon's difficulty tier is generated but not fed into any stat curve. | [C] |
 | G6 | **Tech tree is one node with a flat XP ratio** (500/point, no curve), and the bonus is in-process only, so a server-authoritative match wouldn't see levels. | [C] |
 | G7 | **No server authority or persistence for the kit** — `BP_FX_KIT_*` is the single hook a networked kit would use. | [C] |
@@ -150,7 +150,7 @@ Ordered by what this box can actually finish. Status moves only when a check run
 - [ ] N3 zone packet for co-op
 - [x] G2 allies spend/earn EMPIRE influence — closed 2026-10-31, see §4
 - [x] G3 authored wave spawners on a timer — scheduler + seam shipped 2026-10-31, arming call open (§4)
-- [ ] G4 downed-and-revived allies
+- [x] G4 downed-and-revived allies — closed 2026-10-31, see §4
 - [x] W1 floor-size-aware upper-floor population — closed 2026-10-31, see §4
 - [ ] W7 structure graph hooked into detached pieces
 - [ ] E3 mirror material authorable in the level/material list
@@ -164,6 +164,20 @@ Blocked on a toolchain, listed so they stop looking forgotten: A1, I1, I2, I7 (G
 R6, A3 (GPU/display), E7 (mingw), and everything in §2.8 (founder call).
 
 ## 4. Progress log
+
+### 2026-10-31 — G4, downed allies (PARENA + SHANKPIT)
+
+`physics.h` already puts a dead body in `STATE_DEAD` with a respawn timer, so the seam was to **hold** that
+timer, not invent a second death path: `story_ai_downed_tick` keeps `respawn_time` a second ahead while an
+**ally** is down, accumulates the bleed, releases at the window, and revives on a hold that restores 40% of
+the archetype's pool. Zombies are excluded by `empire-downable` — a beast that lingers is a bug, not a
+rescue — so every existing level's enemies behave exactly as before.
+
+**Verified:** `make test-empire-rules` green (boundaries at exactly the window and the hold, plus parity
+between the generated copy and the `empire_units_rules.h` defaults `story_ai.c` actually reads);
+`make test-empire-units` green; `make -B server` links the tick.
+**Still open:** nothing watched it happen (no SDL2 to build the lobby), and the revive check is straight-line
+hero distance, so a body behind a wall is still reachable.
 
 ### 2026-10-31 — G3, the wave scheduler (PARENA + SHANKPIT)
 
