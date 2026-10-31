@@ -4,6 +4,10 @@
 `PARENA/src/emit_lua.c`, `SHANKPIT/packages/simulation/{ambient_life.h,arena_rules_test.c}`,
 `NOOBTOPIA/src/{ambient,noobtopia,big_o_witness}.lua` + generated `src/generated/`. Written before the code, per the
 standing rule.
+**Status (movement slice, 2026-10-31):** second slice built — `PARENA/stdlib/noobtopia/walk_rules.prn` +
+`walk_parity.txt`, `SHANKPIT/packages/simulation/{walk_rules.h,walk_rules_test.c}` (emitted `walk_rules.c`),
+`NOOBTOPIA/src/wander.lua` + generated `src/generated/walk_rules.lua` + `tests/walk_test.lua`. "Where does it drift"
+is now a shared rule, and for the first time the Luau half is **executed**, not just reviewed (§6).
 **Founder direction (real-time, 2026-10-30):** *"clone down NOOBTOPIA it is a basic roblox script lets start building in
 both directions ... BIG_O is the IP SHANKPIT is the agile implementation NOOBTOPIA is the data for making our world seem
 more alive we script in more random interactions like the talking from noobtopia AT THE SAME TIME we start to build BIG_O
@@ -110,14 +114,52 @@ releasing on concrete. If someone "fixes" the friction table so ice is not slipp
 
 Deliberately deferred in this slice, named so nobody assumes otherwise:
 
-- **No movement/scheduling merge yet.** NOOBTOPIA's original script wanders on a 33 s timer; SHANKPIT NPCs are stationary
-  today (BIG_O's README says the same about its own). Unifying "where does it drift" is the next slice, and it needs a
-  shared walk target rule, not just a shared line.
 - **No Big-O witness content in the ambient sets.** A noob does not yet gossip about a body it did not see. That is the
   interesting crossover — ambient lines conditioned on *witness state* — and it needs BIG_O's ledger on both sides first.
 - **No Roblox publishing.** Luau modules are written and loadable, but getting them into a place is a separate, later
   conversation (the founder's own words: "we will figure out how to get it into ROBLOX later").
 - **No audio.** Both worlds are text-only today.
+
+## 3b. The second slice: where it drifts, and when (2026-10-31)
+
+The first slice unified what a noob *says* and left movement explicitly alone. This slice is that debt: NOOBTOPIA's
+original script wandered on a 33 s timer, SHANKPIT NPCs stood still, and MAGIC — neither could be shared because
+neither was decided anywhere.
+
+`PARENA/stdlib/noobtopia/walk_rules.prn` now decides the whole movement question, integer in / integer out, emitted
+twice exactly like the first slice:
+
+| Question | Answer | Consumed by |
+|---|---|---|
+| may it pick a new destination now? | `walk-should-choose` over `walk-idle-ticks` | both |
+| which of 8 compass headings? | `walk-heading` (+ `walk-heading-dx/dy`) | both |
+| how long is this leg? | `walk-leg-length` | both |
+| how fast does it walk? (permille) | `walk-mood-speed-permille` | both |
+| does the destination stay in its own street? | `walk-within-leash` (squared, no sqrt) | both |
+
+The two hosts integrate with the **same integer algorithm**, which is what makes the two worlds comparable at all:
+no floats, no `Vector3`, no clock in the rules; a target is one leg along a heading, rejected if it leaves the leash
+(all 8 headings tried), and movement is one whole unit per tick gated by a permille credit. So a STARTLED noob
+(0 permille) is *frozen* — a state, not a slow speed — a TIRED one (400) steps twice every five ticks, and neither
+world can move half a unit.
+
+**Parity vectors are real now, not aspirational.** `PARENA/stdlib/noobtopia/walk_parity.txt` holds 13 rows of
+(mood, since, seed) → (idle, choose, heading, leg, speed, unit vector), generated from the C and hand-checked. Both
+`make test-walk-rules` (SHANKPIT) and `lua tests/walk_test.lua` (NOOBTOPIA) assert that same file, so a drifting port
+is a red test on one side rather than a quiet divergence.
+
+### Bug the executed port found
+
+Running the Luau for the first time found a real cross-world defect the reviewed-but-unexecuted code had carried:
+the seed mixer. `ambient_life.h`'s `(seed * 1103515245 + 12345) & 0x7FFFFFFF` needs 61 bits for a seed near 2^31, and
+Roblox's numbers are IEEE doubles (exact to 2^53), so the low bits are rounded away — seed 2147483646 yields
+`2087949151` exactly but `2087949312` in double arithmetic, i.e. two different universes from one seed. Plain `lua`
+5.4 has 64-bit integers and hides it entirely, which is exactly why this needed a runtime that models Luau, not just
+any Lua.
+
+The movement slice therefore uses MINSTD (`* 48271 mod 2^31-1`, peak ~1e14, exact in both) and says so in both hosts.
+`ambient_life`'s own mixer is left as-is and named here rather than silently changed: the fix belongs with whoever
+next touches the ambient seed stream, and it changes every existing ambient draw.
 
 ## 4. Building BIG_O into Roblox (the second direction)
 
@@ -146,10 +188,10 @@ split is why the rule layer is testable at all, and it mirrors BIG_O's own "rule
 
 ## 6. Honest limits of this pass
 
-- **No Lua interpreter on this build box** (`lua`, `luajit`, `lua5.x` all absent), so the Luau modules are written and
-  reviewed but **not executed**. The C side of the same decisions *is* executed (`make test-ambient-life`), so the maths
-  is proven and the port is not. That is the first thing to fix when a Lua runtime is available — and it is why the port
-  is a straight transcription with no cleverness in it.
+- **The Luau half is executed now, on plain Lua 5.4**, which is how the seed-mixer bug above was found. That is not
+  Luau and not Roblox: `lua` 5.4 has 64-bit integers where Luau has doubles, so the test run can only prove the parts
+  that do not depend on number representation — it cannot prove the ambient mixer, and it would have hidden this bug
+  if the walk slice had reused that mixer. `lua tests/ambient_test.lua` and `lua tests/walk_test.lua` both run clean.
 - **Roblox is unverified by definition here.** No Studio, no place file, no publishing.
 - The SHANKPIT host is wired only into a headless test, not into the lobby's NPC draw loop — the lobby cannot be compiled
   in this sandbox (no SDL2 headers), which is the same standing limit the rest of the engine work carries.

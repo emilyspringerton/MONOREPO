@@ -1,0 +1,5 @@
+# sibling repos cloned into the workspace (their own git repos, not submodules)
+/BIG_O/
+/NOOBTOPIA/
+/PARENA/
+/SHANKPIT/
