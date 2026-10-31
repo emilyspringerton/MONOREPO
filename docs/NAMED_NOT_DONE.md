@@ -44,7 +44,7 @@ Legend: **[C]** closable and checkable here · **[T]** needs a toolchain this bo
 
 | # | Gap | Flags |
 |---|---|---|
-| N1 | **No kit-call packet.** Gadget keys are local/sandbox only and do nothing in `STATE_GAME_NET`, where the server owns spawning. | [C] |
+| ~~N1~~ | ~~**No kit-call packet.** Gadget keys are local/sandbox only and do nothing in `STATE_GAME_NET`, where the server owns spawning.~~ — **closed 2026-10-31**: `PACKET_KIT_CALL` + `kit_call.h` make a call an intent the server decides; `make test-kit-call` green and the server links. See §4. | [C] |
 | N2 | **Drones are not replicated in snapshots** to remote clients (aircraft exist locally only). | [C] |
 | N3 | **No zone packet.** A LAN friend cannot join a procedural zone — the seed is host-local, so co-op is the local half only. Phase 2 of `docs/GFD_UNIFICATION.md`. | [C] |
 | N4 | **Imported skins don't replicate** — a coop peer sees the server's `forced_kit` or the usual heuristic. | [C] |
@@ -107,7 +107,7 @@ Legend: **[C]** closable and checkable here · **[T]** needs a toolchain this bo
 | W4 | **The live "nextown" level comes from the zombies registry** when online, so a connected run serves the registry's copy until it's re-exported. | [C] |
 | W5 | **`strength` is linear in remaining volume** — under-rates a hollow tube, over-rates a piece whose base alone was shot out; a weakest-cross-section model needs per-layer bookkeeping that doesn't exist. | [C] |
 | W6 | **Unmodelled structural physics**: shear flow, buckling shape (a pillar holds or fails, it doesn't bow), fatigue, per-cell stress. A dropped slab is one rigid body — no re-fracture on landing, no piling. | [C] |
-| W7 | **Stage 2's gameplay half**: a detached piece should remove its structure-graph node and re-evaluate; the graph is built and proven headless but nothing calls it from `brick_world.h`. | [C] |
+| ~~W7~~ | ~~**Stage 2's gameplay half**: a detached piece should remove its structure-graph node and re-evaluate; the graph is built and proven headless but nothing calls it from `brick_world.h`.~~ — **not a gap**: checked directly on 2026-10-31, `brick_world.h` builds the graph at level load, re-evaluates it in `brick_world_flush` after every breach, and `make test-brick-world` proves a support carved to a stub drops the deck through the real glue. The unmodelled parts are W5/W6, which stay open. | [C] |
 | W8 | **No gossip-conditioned-on-witness ambient lines, no shared wander targets** in NOOBTOPIA. | [C] |
 
 ### 2.7 Infra / CI
@@ -146,13 +146,13 @@ both hosts); `--coop-host` is one command.
 
 Ordered by what this box can actually finish. Status moves only when a check runs.
 
-- [ ] N1 kit-call packet (net path)
+- [x] N1 kit-call packet (net path) — closed 2026-10-31, see §4
 - [ ] N3 zone packet for co-op
 - [x] G2 allies spend/earn EMPIRE influence — closed 2026-10-31, see §4
 - [x] G3 authored wave spawners on a timer — scheduler + seam shipped 2026-10-31, arming call open (§4)
 - [x] G4 downed-and-revived allies — closed 2026-10-31, see §4
 - [x] W1 floor-size-aware upper-floor population — closed 2026-10-31, see §4
-- [ ] W7 structure graph hooked into detached pieces
+- [x] W7 structure graph hooked into detached pieces — checked 2026-10-31: already wired and covered by `test-brick-world`, see §4
 - [ ] E3 mirror material authorable in the level/material list
 - [ ] E1 NOCK placement UI for nodes and claim cells
 - [ ] I3 kill DEADWEIGHT's hand-copied `GUI_SRC` list
@@ -164,6 +164,41 @@ Blocked on a toolchain, listed so they stop looking forgotten: A1, I1, I2, I7 (G
 R6, A3 (GPU/display), E7 (mingw), and everything in §2.8 (founder call).
 
 ## 4. Progress log
+
+### 2026-10-31 — N1, the kit call on the wire (SHANKPIT)
+
+The gap was exactly as written: the vehicle gadget keys did nothing in `STATE_GAME_NET`, because the server owns
+spawning and there was no packet to ask it. The client could not do the spawn itself — a buggy born on one client
+would be a car the server never knew about, and two clients would each mint their own — so the seam carries
+**intent**: `PACKET_KIT_CALL`'s item byte, nothing else. `kit_call_server_apply` is the one authoritative verb and
+refuses a dead or spectating caller before handing off to `vehicle_call_spawn`, which already refuses "not a call
+item / already driving / on cooldown / garage full". The spawned vehicle needs no new replication — `PACKET_SNAPSHOT`
+already carries `NetBuggy` and `NetHelicopter`.
+
+**Verified:** `make test-kit-call` all checks passed under ASan+UBSan — fixed packet size, build/parse round trip,
+every malformed datagram refused (short, wrong type, non-vehicle item, out-of-range byte), a real spawn-and-seat
+through the server verb, the cooldown, dead/spectating/inactive callers denied, a full garage refused without
+recycling somebody else's car, and the rocket car and helicopter reaching the same verb local play uses.
+`make -B server` links with the handler in it.
+
+**A real bug surfaced from a compiler warning, not from re-reading the code:** the G4 revive called `phys_respawn`
+with no declaration in its translation unit. It linked, so nothing failed — and `phys_respawn` is the respawn path,
+which places the body at a spawn point. The revive was silently teleporting the ally. It now stands up where it
+fell.
+
+**Still open:** the lobby's sending half cannot be compiled here (no SDL2 headers), so it is reviewed, not run, and
+no call has been watched arriving on a second client. A called **drone or C-110** spawns server-side but is not in
+snapshots yet (N2), so a remote player does not draw those two.
+
+### 2026-10-31 — W7, checked rather than built (SHANKPIT)
+
+W7 said the structure graph "is built and proven headless but nothing calls it from `brick_world.h`". Checked
+directly: `brick_world.h` builds the graph in `brick_world_init_from_level`, re-evaluates it inside
+`brick_world_flush` after every breach (`bf_detect_detached` for cells, then `brick_world_structure_tick` for
+pieces), and `make test-brick-world` drives a support carved down to a stub through that real glue until the deck it
+carried comes down (`structure_collapse_test`). So the gap was out of date rather than open; recorded as closed with
+the check as evidence instead of writing a duplicate call site. The genuinely unmodelled structural physics — shear
+flow, buckling shape, fatigue, per-cell stress — are W5 and W6 and stay open.
 
 ### 2026-10-31 — G4, downed allies (PARENA + SHANKPIT)
 
@@ -261,6 +296,7 @@ corner spots, so a 254×68 deck still fields at most two; and the population is 
 
 ## History
 
+- 2026-10-31: N1 closed (kit call on the wire). W7 checked and found already wired; closed with evidence.
 - 2026-10-31: W1 closed; see §4.
 - 2026-10-31: opened. 45 open items across seven subsystems, extracted from the previous session's
   own named-not-done sections and cross-checked against its later turns for work that shipped.
