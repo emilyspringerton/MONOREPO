@@ -157,9 +157,11 @@ Roblox's numbers are IEEE doubles (exact to 2^53), so the low bits are rounded a
 5.4 has 64-bit integers and hides it entirely, which is exactly why this needed a runtime that models Luau, not just
 any Lua.
 
-The movement slice therefore uses MINSTD (`* 48271 mod 2^31-1`, peak ~1e14, exact in both) and says so in both hosts.
-`ambient_life`'s own mixer is left as-is and named here rather than silently changed: the fix belongs with whoever
-next touches the ambient seed stream, and it changes every existing ambient draw.
+Both mixers are now MINSTD (`* 48271 mod 2^31-1`, peak ~1e14, exact in both): `walk_rules.h`/`wander.lua` from the
+start, and `ambient_life.h`/`ambient.lua` converted to it in the same pass once the defect was proven. Four vectors
+are pinned **in both test suites** — 0, 42, 999999, and 2147483646, the seed that used to diverge — so this cannot
+regress silently on either side. It does change every existing ambient draw, which is the correct behaviour: the old
+stream was two different streams pretending to be one.
 
 ## 4. Building BIG_O into Roblox (the second direction)
 
@@ -189,9 +191,10 @@ split is why the rule layer is testable at all, and it mirrors BIG_O's own "rule
 ## 6. Honest limits of this pass
 
 - **The Luau half is executed now, on plain Lua 5.4**, which is how the seed-mixer bug above was found. That is not
-  Luau and not Roblox: `lua` 5.4 has 64-bit integers where Luau has doubles, so the test run can only prove the parts
-  that do not depend on number representation — it cannot prove the ambient mixer, and it would have hidden this bug
-  if the walk slice had reused that mixer. `lua tests/ambient_test.lua` and `lua tests/walk_test.lua` both run clean.
+  Luau and not Roblox: `lua` 5.4 has 64-bit integers where Luau has doubles, so a plain-Lua run **cannot** prove the
+  parts that depend on number representation — it hid this exact bug until the mixer was checked against forced
+  double arithmetic by hand. `lua tests/ambient_test.lua` and `lua tests/walk_test.lua` both run clean, and both
+  exclude the mixer's four pinned vectors from that caveat because those are integer-exact in every runtime.
 - **Roblox is unverified by definition here.** No Studio, no place file, no publishing.
 - The SHANKPIT host is wired only into a headless test, not into the lobby's NPC draw loop — the lobby cannot be compiled
   in this sandbox (no SDL2 headers), which is the same standing limit the rest of the engine work carries.
