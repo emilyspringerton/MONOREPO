@@ -1,0 +1,169 @@
+# NAMED_NOT_DONE.md — every gap the 2026-10-30/31 session named, and its status
+
+**Status:** opened 2026-10-31. Source: `var/freebuff/freebuff-chat-2026-10-30T22-11-21.091Z.md`
+(150k lines, 141 messages, the whole previous session). Every item below is quoted or paraphrased
+from that session's own "Not done", "Named limitations", "Limits" and "Still open" sections — the
+places where work was *claimed* complete but a deliberate slice was left.
+
+This doc exists because those sections are spread across ~25 turns of one enormous transcript, and
+a named gap that nobody re-reads is just an unknown gap.
+
+## How to read this
+
+- **A gap is closed when a check runs**, not when code is written. This box has `gcc`, `make`,
+  `python3` and `node`; it has **no Go, no Lua, no bazel, no SDL2 headers and no GPU/display**.
+  Anything that needs those stays open by definition and is labelled so.
+- Items are grouped by subsystem, not by the order they were found.
+- `docs/ENVIRONMENT_BOOTSTRAP.md` covers getting the box to a state where more of this is
+  verifiable — several gaps below are closed *only* by having a toolchain.
+
+---
+
+## 1. What is verifiable on this box
+
+| Tool | Present | Consequence |
+|---|---|---|
+| `gcc`, `make` | yes | SHANKPIT's 21 `test-*` targets are real checks (`make test-empire-rules`, `test-lofts`, …) |
+| `python3` | yes | `tools/local_nock.py`, `scripts/bake_levels.py`, NOCK store/validate paths |
+| `node` | yes | `node --check` on the editor's scripts and any JS module; no browser |
+| SDL2 headers | **no** | `make lobby` cannot even compile — every client/render claim is reviewable only |
+| GPU / display | **no** | nothing visual is ever "seen"; visual claims are rules claims |
+| `go` | **no** | IDUNA, `emily.cli`, `emily-agent`, `IDUNA.GAME`, PITVIPER unbuildable |
+| `lua` / `luajit` | **no** | NOOBTOPIA's Luau modules and generated Lua never execute; only the C emitted from the same `.prn` runs |
+| `bazel` | **no** | PARENA/SHANKPIT/BIG_O Bazel targets unbuildable; `make` is the substitute |
+| `kubectl` | no | IDUNA is unreachable without the `BOOTSTRAP.md` port-forward |
+
+---
+
+## 2. The gaps, by subsystem
+
+Legend: **[C]** closable and checkable here · **[T]** needs a toolchain this box lacks ·
+**[V]** needs eyes on a display.
+
+### 2.1 Netcode / replication — the largest real cluster
+
+| # | Gap | Flags |
+|---|---|---|
+| N1 | **No kit-call packet.** Gadget keys are local/sandbox only and do nothing in `STATE_GAME_NET`, where the server owns spawning. | [C] |
+| N2 | **Drones are not replicated in snapshots** to remote clients (aircraft exist locally only). | [C] |
+| N3 | **No zone packet.** A LAN friend cannot join a procedural zone — the seed is host-local, so co-op is the local half only. Phase 2 of `docs/GFD_UNIFICATION.md`. | [C] |
+| N4 | **Imported skins don't replicate** — a coop peer sees the server's `forced_kit` or the usual heuristic. | [C] |
+| N5 | **Claims and stockpiles are per-host**; EMPIRE territory does not replicate (nodes/claims themselves are level-authored now). | [C] |
+| N6 | **Net clients draw no projectiles at all** — pre-existing: projectiles aren't on the wire, so a networked grenade is server-side only. | [C] |
+| N7 | **No burning-car fire state on the wire** — the hull and blast are the local sim's. | [C] |
+
+### 2.2 Gameplay systems
+
+| # | Gap | Flags |
+|---|---|---|
+| G1 | **No job is applied to a live match.** The stat bridge exists and is tested, but no call site reads it — a player is 100 HP and stock ROF whatever a save says. | [C] |
+| G2 | **Allies don't spend or earn EMPIRE influence** on spawn, or when banking gathered resources. | [C] |
+| G3 | **No wave spawner** that emits authored archetypes on a timer for zombies/survival modes. | [C] |
+| G4 | **No downed-and-revived state** — allies die outright instead of being rescuable. | [C] |
+| G5 | **Nothing persists** — a character's job/level doesn't survive a restart; a dungeon's difficulty tier is generated but not fed into any stat curve. | [C] |
+| G6 | **Tech tree is one node with a flat XP ratio** (500/point, no curve), and the bonus is in-process only, so a server-authoritative match wouldn't see levels. | [C] |
+| G7 | **No server authority or persistence for the kit** — `BP_FX_KIT_*` is the single hook a networked kit would use. | [C] |
+| G8 | **No cargo bay / rear ramp / airborne spawn / cargo drops** on the aircraft: an interior `Level` travelling inside a moving hull was refused rather than faked. | [C] (logic) |
+
+### 2.3 Animation
+
+| # | Gap | Flags |
+|---|---|---|
+| A1 | **Nothing draws from the thirteen-clip contract.** The player body is still `compute_player_anim_pose`; `anim_state_for_player` isn't in `main.c`; the NPC kit loader still takes four clip names. | [T] (lobby must compile) |
+| A2 | **No Mixamo importer** — the contract is import-*into*, not a converter. | [C] |
+| A3 | Sampled channels have never been run through forward kinematics into a skinned draw. | [V] |
+| A4 | A body is **a story-AI slot, not a loyal soldier** — placement is real, allegiance isn't. | [C] |
+
+### 2.4 Renderer / materials — almost all unverifiable here
+
+| # | Gap | Flags |
+|---|---|---|
+| R1 | **Mirror material exists as a draw function but nothing selects it** — `draw_material_mirror_box` waits for a material kind. Sphere map means no parallax and no true reflection. | [C] for the material kind (level data); [V] for the GL path |
+| R2 | **No probe bake, no UV-offset draw path, no palette shader, no tint quad wiring** for the Doom/Quake/HL/GTA material vocabulary. | [V] |
+| R3 | **A lightning flash doesn't push exposure/bleed**; the litbox shader still takes cone/uniform values rather than a per-pixel environment term. | [V] |
+| R4 | **Bedrock Racers' stadium is in no scene** — mesh built, nothing loads or draws it, no car clamped to it, no collision response, no goal shafts in the SDF, no faceted OBB destruction shell. | [C] load+clamp / [V] draw |
+| R5 | **Nothing draws water** (buoyancy numbers only); no boat entity; an impact isn't routed through the structure graph. | [V] / [C] |
+| R6 | **Widgets draw nothing** — no prompt quad, no panel, no lever or centrifuge mesh (the circuit itself is in the level loop now). | [V] |
+
+### 2.5 Editor / authoring (NOCK + local_nock)
+
+| # | Gap | Flags |
+|---|---|---|
+| E1 | **No NOCK placement UI for EMPIRE resource nodes or claim cells** — schema, loader, serializer and both hosts are done, so authoring them means hand-editing JSON. | [C] |
+| E2 | **local_nock can't edit the recursive lofts tree** — `LevelStore` is flat and `validate_level` requires `walls`, so sub-levels and `objects` are files plus a builder run; there's no object *placement* tool either. | [C] |
+| E3 | **The material list can't author mirrors** (see R1). | [C] |
+| E4 | **The NPC kit dropdown doesn't list imported skin sets** — an NPC's number is typed by hand from the startup log. | [C] |
+| E5 | **No wiring UI for the circuit** — pins are a table of indexes in JSON. | [C] |
+| E6 | **No port picker for the NOCK tile** — it always uses 8787. | [C] |
+| E7 | **Windows has no bundled `dw_nock.exe`**, so the tile honestly reports "not found" there. | [T] (mingw) |
+
+### 2.6 World / content
+
+| # | Gap | Flags |
+|---|---|---|
+| W1 | **Upper floors get one zombie each regardless of floor size** — a 60×20 and a 20×60 floor are treated the same. | [C] |
+| W2 | **A themed interior repeats on every storey** — a six-floor cafe is a cafe on all six, never thinning upstairs. | [C] |
+| W3 | **No district simulation**, so the EMPIRE minimap honestly shows only the block you stand on. | [C] |
+| W4 | **The live "nextown" level comes from the zombies registry** when online, so a connected run serves the registry's copy until it's re-exported. | [C] |
+| W5 | **`strength` is linear in remaining volume** — under-rates a hollow tube, over-rates a piece whose base alone was shot out; a weakest-cross-section model needs per-layer bookkeeping that doesn't exist. | [C] |
+| W6 | **Unmodelled structural physics**: shear flow, buckling shape (a pillar holds or fails, it doesn't bow), fatigue, per-cell stress. A dropped slab is one rigid body — no re-fracture on landing, no piling. | [C] |
+| W7 | **Stage 2's gameplay half**: a detached piece should remove its structure-graph node and re-evaluate; the graph is built and proven headless but nothing calls it from `brick_world.h`. | [C] |
+| W8 | **No gossip-conditioned-on-witness ambient lines, no shared wander targets** in NOOBTOPIA. | [C] |
+
+### 2.7 Infra / CI
+
+| # | Gap | Flags |
+|---|---|---|
+| I1 | **`go_os_app`'s skip path was never executed** — no Go toolchain, so both the success and failure paths are reviewed, not run. | [T] |
+| I2 | **PITVIPER's and IDUNA.GAME's Go modules aren't vendored**, so a release build still needs the network — bounded now, not eliminated. | [T] |
+| I3 | **DEADWEIGHT's `GUI_SRC` is a hand-copy** in the release workflow; it has drifted nine times and is the highest-probability future red build. | [C] |
+| I4 | **No CI job that builds the OS apps alone** with a small budget, so a module problem holds the whole release. | [C] |
+| I5 | **The lobby's APPS page shows a generic "not found"** instead of why an app is missing (not bundled vs. failed to build). | [C] |
+| I6 | **A hosted world's server outlives the lobby** (child process) — named as a policy needing a founder call, not a bug. | [C], needs a decision |
+| I7 | **`-Wall -Wextra` noise in the lobby** (unused params, `-Wmisleading-indentation`, a `/*` inside a comment, signed/unsigned compare) — invisible in the release build. | [T] (needs SDL2 to compile) |
+
+### 2.8 Deliberately deferred by the founder — do not "fix" without direction
+
+- **Getting NOOBTOPIA into a live Roblox place** — "we'll figure out how to get it into ROBLOX later".
+- **A 3-line LocalScript** on the Roblox side firing the `Punch` RemoteEvent; the host warns loudly
+  when it's missing rather than failing quiet.
+- **Payment processing** in EDGE.GAME (`Stripe`/`Square`/`Tap-to-Pay`) — real money, gated on an
+  explicit go-ahead.
+- **True planar/cube reflections** — an extra scene render per frame the target can't pay.
+- **BR's strafe/attitude jets and wall-driving** — there are no axes for them here.
+- **The duplicate trees `apps2/` + `packages2/`** — left alone on purpose.
+
+### 2.9 Closed later in the same session (do not redo)
+
+Recorded so nobody rebuilds them: the widget circuit **is** in the level loop; LAN world **discovery**
+shipped; the VEHICLE gadget set closed the vehicles gap; loft **upper-floor population** and
+**per-theme loot** shipped; nodes and claims **are** level-authored (schema, loader, serializer,
+both hosts); `--coop-host` is one command.
+
+---
+
+## 3. Work queue
+
+Ordered by what this box can actually finish. Status moves only when a check runs.
+
+- [ ] N1 kit-call packet (net path)
+- [ ] N3 zone packet for co-op
+- [ ] G2 allies spend/earn EMPIRE influence
+- [ ] G3 authored wave spawners on a timer
+- [ ] G4 downed-and-revived allies
+- [ ] W1 floor-size-aware upper-floor population
+- [ ] W7 structure graph hooked into detached pieces
+- [ ] E3 mirror material authorable in the level/material list
+- [ ] E1 NOCK placement UI for nodes and claim cells
+- [ ] I3 kill DEADWEIGHT's hand-copied `GUI_SRC` list
+- [ ] I5 lobby APPS page explains *why* an app is missing
+- [ ] R4 load and clamp the stadium into a scene (drawing stays [V])
+- [ ] A2 Mixamo-to-gband importer
+
+Blocked on a toolchain, listed so they stop looking forgotten: A1, I1, I2, I7 (Go/SDL2), R2, R3, R5,
+R6, A3 (GPU/display), E7 (mingw), and everything in §2.8 (founder call).
+
+## History
+
+- 2026-10-31: opened. 45 open items across seven subsystems, extracted from the previous session's
+  own named-not-done sections and cross-checked against its later turns for work that shipped.
