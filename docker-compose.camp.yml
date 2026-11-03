@@ -1,0 +1,66 @@
+# CAMP LAN — the identity + stats half of a SHANKPIT night with no uplink.
+#
+#     win/camp host (this machine)          raspberry pi zero w  (sudo-queue/98-shankpit-camp-lan-pi.sh)
+#     ┌──────────────────────────┐          ┌───────────────────────────────────────┐
+#     │ iduna    :8080  (this)   │◄──usb0───│ 192.168.43.1  DHCP + DNS              │
+#     │ wotan    :8081  (this)   │          │ 192.168.42.1  Wi-Fi AP "SHANKPIT..."  │
+#     │ shank_lobby / shank_    │          └──────────────┬────────────────────────┘
+#     │ server   :6969/udp       │                         │ phones, laptops
+#     │ (NATIVE, not in here)    │                         ▼
+#     └──────────────────────────┘                   192.168.42.10-150
+#
+# WHAT IS IN THIS FILE AND WHAT IS NOT. IDUNA (identity, guest accounts, JWKS) and WOTAN (the static
+# esports site) run here. The GAME does not: `shank_server` is a native binary with its own UDP loop
+# (default port 6969, `--port N` overrides) and containerising it would buy nothing on a camp box that
+# is already running it. The DNS and DHCP that make `iduna.local` resolve do not live here either --
+# they live on the Pi, because the Pi is the thing handing out addresses.
+#
+# THE DATABASE IS SQLITE, NOT MYSQL. IDUNA only speaks MySQL when MYSQL_DSN is set (main.go); with it
+# unset it opens SQLITE_PATH (default var/iduna.db) through modernc.org/sqlite, which is pure Go. On a
+# camp box that is one file on one volume instead of a second server to keep alive, so there is no
+# database container in this stack at all.
+#
+# BOTH ENGINES. No network driver is declared, so `docker compose` makes a bridge and
+# `docker stack deploy` makes an overlay without this file needing swarm-only syntax. Relative bind
+# mounts work in compose; swarm needs an absolute host path, so set WOTAN_DIR=/abs/path/WOTAN there.
+#
+#     CAMP_HOST=192.168.43.10 ./camp-deploy.sh
+#
+services:
+  iduna:
+    image: iduna:camp
+    build:
+      context: ./IDUNA
+      dockerfile: ops/docker/iduna.Dockerfile
+    restart: unless-stopped
+    environment:
+      # The host's own LAN address: this is what every client is told to talk to.
+      BASE_URL: "http://${CAMP_HOST:-192.168.43.10}:8080"
+      SQLITE_PATH: /data/iduna.db
+      # Guest-register / SSO redirects never leave the LAN.
+      SSO_ALLOWED_REDIRECT_HOSTS: "${CAMP_HOST:-192.168.43.10},localhost,iduna.local,wotan.local"
+    volumes:
+      - iduna_data:/data
+    ports:
+      - "8080:8080"
+    healthcheck:
+      # The root page is IDUNA's own served index; a 200 there means the mux is up. No invented
+      # /healthz route: this checks something that actually exists.
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  wotan:
+    image: nginx:1.25-alpine
+    restart: unless-stopped
+    volumes:
+      # WOTAN is plain static HTML with no build step (WOTAN/CLAUDE.md), so it is served, not built.
+      - "${WOTAN_DIR:-./WOTAN}:/usr/share/nginx/html:ro"
+    ports:
+      - "8081:80"
+
+volumes:
+  # The whole camp's identity database lives here. Back this up before taking the box home.
+  iduna_data: {}
