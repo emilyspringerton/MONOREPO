@@ -37,6 +37,14 @@ export USE_GKE_GCLOUD_AUTH_PLUGIN=True
 
 # 1. one-time installs if missing: go 1.26.x (go.dev/dl), then
 gcloud components install kubectl gke-gcloud-auth-plugin --quiet
+#    If that errors with "installation root of the Cloud SDK could not be located" (it does on the
+#    /tools/google-cloud-sdk image, because there is no component manager metadata), install kubectl
+#    straight from upstream instead — same binary, no component manager:
+#    KV=$(curl -sSL https://dl.k8s.io/release/stable.txt)
+#    curl -sSLo "$HOME/.local/bin/kubectl" "https://dl.k8s.io/release/$KV/bin/linux/amd64/kubectl"
+#    chmod +x "$HOME/.local/bin/kubectl"
+#    (gke-gcloud-auth-plugin has no such standalone path here; it only matters once you're authenticated,
+#    at which point an authenticated `gcloud components install` may also start working.)
 
 # 2. THE STEP THAT GETS FORGOTTEN
 gcloud config set project project-d24a71e9-2daf-4b2d-917
@@ -91,8 +99,21 @@ emily apples post -t completion -r EMILY --run-id "$(emily session current)" "<t
 - **Workspace gaps:** `go.work` lists `EDIS`, `PRRJECT_FATBABY`, `emily.cli`, `gpt2-alpine-c`, which
   weren't cloned, so any workspace-mode `go` command failed. Fix is to actually clone them — the loop
   is in `docs/ENVIRONMENT_BOOTSTRAP.md` §3; `GOWORK=off` only papers over it per-module.
+  **`NORN` and `SKULDMARK` are two more** (found 2026-11-03): neither is a `go.work` module, but five
+  modules `replace` them by local path, so a box missing them builds `EDIS`/`gpt2-alpine-c` fine and
+  fails five others with `reading NORN/go.mod: no such file`. Both are in §3's clone loop now.
+- **`go build ./...` at the anchor is not a valid check** — the anchor has `go.work` and no `go.mod`,
+  so it exits 1 with `directory prefix . does not contain modules listed in go.work`. Build per
+  module (`go build ./IDUNA/...`); §5 of the environment doc has the loop.
 - The default `IDUNA_BASE_URL` is `http://localhost:8080`; always override it (see step 4).
 
 ## History
 
 - 2026-10-14: first bootstrap on this box, Apple #22255.
+- 2026-11-03: bootstrap on a `/content/MONOREPO` box (Claude Code web sandbox, root, no gcloud login).
+  Go 1.26.8 → `~/.local/go`, kubectl v1.37.2 standalone → `~/.local/bin`, `emily` 1.0.0 built
+  (`GOWORK=off ./scripts/build.sh`) and all seven `go.work` modules build clean. `NORN` + `SKULDMARK`
+  discovered as required-but-unlisted clones. `/home/fatbaby` symlinked to the box's real path, so
+  `emily session new` works here. **Blocked at step 2:** `gcloud auth list` shows `No credentialed
+  accounts`, so the project/cluster/IDUNA-port-forward half genuinely needs the founder's
+  `gcloud auth login` — nothing local can substitute for it.

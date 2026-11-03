@@ -62,7 +62,8 @@ cd "$MONOREPO_DIR"
 
 for repo in \
   EMILY IDUNA SHANKPIT PRRJECT_FATBABY emily.cli EDIS gpt2-alpine-c \
-  PARENA BIG_O WOTAN OKEMILY NOOBTOPIA
+  PARENA BIG_O WOTAN OKEMILY NOOBTOPIA \
+  NORN SKULDMARK
 do
   [ -d "$repo" ] || git clone "git@github.com:emilyspringerton/$repo.git" "$repo"
 done
@@ -70,6 +71,18 @@ done
 
 `[ -d "$repo" ] ||` is what makes it re-runnable. Nothing here touches a repo that already exists,
 so a partial box finishes rather than re-cloning 60 MB of `EMILY`.
+
+**`NORN` and `SKULDMARK` are not `go.work` modules but are just as mandatory** (added 2026-11-03).
+Five modules carry `replace norn => ../NORN` / `replace skuldmark => ./SKULDMARK`, so without those
+two clones `go build` fails in `EMILY/emily-agent`, `IDUNA`, `PRRJECT_FATBABY`, `SHANKPIT` and
+`emily.cli` while `EDIS` and `gpt2-alpine-c` still build — a failure pattern that reads like broken
+code rather than a missing clone. Don't enumerate these by hand: ask the `go.mod` files.
+
+```bash
+find . -maxdepth 3 -name go.mod -not -path './.git/*' -print0 \
+  | xargs -0 grep -hoE '=>[[:space:]]*\.{1,2}/[A-Za-z0-9._/-]+' \
+  | sed -E 's/=>[[:space:]]*//; s#^(\.\./|\./)+##' | sort -u
+```
 
 ---
 
@@ -119,8 +132,12 @@ for p in EDIS EMILY/emily-agent IDUNA PRRJECT_FATBABY SHANKPIT emily.cli gpt2-al
   [ -d "$p" ] && echo "ok   $p" || echo "MISSING $p"
 done
 
-# 2. the workspace resolves and builds (this is the real test of the clone list)
-go build ./...
+# 2. every module resolves and builds (this is the real test of the clone list)
+#    NOT `go build ./...` from the anchor: the anchor has only go.work and no go.mod, so
+#    `./...` fails with "directory prefix . does not contain modules listed in go.work".
+for m in ./EDIS ./EMILY/emily-agent ./IDUNA ./PRRJECT_FATBABY ./SHANKPIT ./emily.cli ./gpt2-alpine-c; do
+  go build "$m/..." && echo "ok    $m" || echo "FAIL  $m"
+done
 
 # 3. install the operator CLI — GOWORK=off, or it inherits the workspace and can fail on a module
 #    you don't care about
