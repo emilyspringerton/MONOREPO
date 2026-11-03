@@ -127,3 +127,18 @@ emily apples post -t completion -r EMILY --run-id "$(emily session current)" "<t
   mode rejects it and every module "fails" with a misleading `-mod may only be set to readonly`.
   Same step-2 blocker as the earlier run: `gcloud auth list` → `No credentialed accounts`, so the
   project/cluster/IDUNA half still needs the founder's `gcloud auth login`.
+
+## 2026-11-03 — what `make lobby` actually needs on a fresh box
+
+Found while wiring the salvage slices. Seven packages and two sibling checkouts, in the order they bite:
+
+```
+apt-get install -y libsdl2-dev libsdl2-ttf-dev libgl1-mesa-dev libglu1-mesa-dev libmbedtls-dev
+git clone ../EDITOR.GAME     # the lobby links editor_full.o; without it: "No rule to make target ... editor_stdlib_gen.c"
+git clone ../PELLEGRINO      # then `bash scripts/fetch_mbedtls.sh` -- its vendored mbedtls has
+                             # memory_buffer_alloc, which the system package does not, and the phone browser needs it
+```
+
+`make server` needs none of that and is the check to prefer for simulation work. Also: the repo's own
+`LOBBY_SRC` was missing `packages/simulation/dw_play.c` (eleven `dw_play_*` symbols undefined) — fixed in
+SHANKPIT, so a stale checkout will still show that error and is not this box's problem.
