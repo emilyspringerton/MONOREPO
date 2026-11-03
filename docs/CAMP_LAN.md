@@ -35,7 +35,7 @@ identity and the static site.
 
 IDUNA opens MySQL only when `MYSQL_DSN` is set; with it unset it opens `SQLITE_PATH`
 (`IDUNA/main.go`, `modernc.org/sqlite`, pure Go). So the camp stack has **no database container** — the
-whole identity database is one file on the `iduna_data` volume. That is the correct size for a camp:
+whole identity database is one file on the `iduna_var` volume. That is the correct size for a camp:
 `docker run --rm -v shankpit_camp_iduna_var:/app/var ...` is the backup.
 
 ## Bring it up
