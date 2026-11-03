@@ -117,3 +117,13 @@ emily apples post -t completion -r EMILY --run-id "$(emily session current)" "<t
   `emily session new` works here. **Blocked at step 2:** `gcloud auth list` shows `No credentialed
   accounts`, so the project/cluster/IDUNA-port-forward half genuinely needs the founder's
   `gcloud auth login` — nothing local can substitute for it.
+- 2026-11-03 (second run, same `/content/MONOREPO` box, root, gcloud installed at
+  `/tools/google-cloud-sdk`): the box had reset to toolchain-less again, so §2-§6 of the environment
+  doc were re-run from scratch. Go 1.26.8 → `~/.local/go`, kubectl v1.37.2 standalone →
+  `~/.local/bin` (the `gcloud components install` "installation root ... could not be located" error
+  is confirmed live on this image), 14 repos cloned over SSH (IDUNA/SHANKPIT/PARENA were already
+  present), all seven `go.work` modules build clean, `emily` 1.0.0 installed, `/home/fatbaby`
+  symlinked so `emily session new` works. Note: do **not** export `GOFLAGS=-mod=mod` here — workspace
+  mode rejects it and every module "fails" with a misleading `-mod may only be set to readonly`.
+  Same step-2 blocker as the earlier run: `gcloud auth list` → `No credentialed accounts`, so the
+  project/cluster/IDUNA half still needs the founder's `gcloud auth login`.
