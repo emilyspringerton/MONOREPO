@@ -15,6 +15,11 @@
 # is already running it. The DNS and DHCP that make `iduna.local` resolve do not live here either --
 # they live on the Pi, because the Pi is the thing handing out addresses.
 #
+# THE IMAGE IS IDUNA'S OWN, NOT A CAMP SPECIAL. ops/docker/iduna.Dockerfile is the real production image
+# (golang:1.26-bookworm build, debian runtime, NOCK toolchain); composing it means the camp runs what the
+# repo ships. Its state is on /app/var, which is why the volume is mounted there and SQLITE_PATH points
+# inside it. The image needs IDUNA/.parena staged first (scripts/build-image.sh) -- camp-deploy.sh checks.
+#
 # THE DATABASE IS SQLITE, NOT MYSQL. IDUNA only speaks MySQL when MYSQL_DSN is set (main.go); with it
 # unset it opens SQLITE_PATH (default var/iduna.db) through modernc.org/sqlite, which is pure Go. On a
 # camp box that is one file on one volume instead of a second server to keep alive, so there is no
@@ -36,11 +41,11 @@ services:
     environment:
       # The host's own LAN address: this is what every client is told to talk to.
       BASE_URL: "http://${CAMP_HOST:-192.168.43.10}:8080"
-      SQLITE_PATH: /data/iduna.db
+      SQLITE_PATH: /app/var/iduna.db
       # Guest-register / SSO redirects never leave the LAN.
       SSO_ALLOWED_REDIRECT_HOSTS: "${CAMP_HOST:-192.168.43.10},localhost,iduna.local,wotan.local"
     volumes:
-      - iduna_data:/data
+      - iduna_var:/app/var
     ports:
       - "8080:8080"
     healthcheck:
@@ -63,4 +68,4 @@ services:
 
 volumes:
   # The whole camp's identity database lives here. Back this up before taking the box home.
-  iduna_data: {}
+  iduna_var: {}
