@@ -198,3 +198,61 @@ split is why the rule layer is testable at all, and it mirrors BIG_O's own "rule
 - **Roblox is unverified by definition here.** No Studio, no place file, no publishing.
 - The SHANKPIT host is wired only into a headless test, not into the lobby's NPC draw loop — the lobby cannot be compiled
   in this sandbox (no SDL2 headers), which is the same standing limit the rest of the engine work carries.
+
+## 3c. The third slice: the engine's own upgrades reach Roblox (2026-11-03)
+
+The first two slices unified what a noob *says* and where it *drifts*. SHANKPIT's engine then gained two things that
+are not about noobs at all and that a Roblox world needs just as much: an **environment matrix** (weather, time of
+day, fog and the ambient slider resolved into ONE state instead of four independent dimmers) and a **material
+vocabulary** (what a surface *is*, authored as animation: UV motion, light styles, screen tints, reflection).
+Both were already decisions in PARENA and already C in SHANKPIT. They are now Luau in NOOBTOPIA too.
+
+| Question | Answer lives in | SHANKPIT | NOOBTOPIA |
+|---|---|---|---|
+| how much light does the world get now? | `stdlib/shankpit/lighting_rules.prn` `env-occlusion` | `packages/render/env_matrix.c` | `src/lighting.lua` |
+| how much does haze give BACK? | `env-light-bleed` | same host | same |
+| what is the legibility floor? | `env-ambient-floor` | same host | same |
+| how bright is an outline in the dark? | `env-emissive-scale` | same host | same |
+| how far does a headlight throw in fog? | `env-emitter-range-scale` / `-spread-scale` | same host | same |
+| how reflective is a mirror? | `stdlib/shankpit/material_rules.prn` `mat-reflection-strength-permille` | `packages/render/reflection.h` | `src/material.lua` → `Reflectance` |
+| how bright is a strobe on tick 6? | `light-style-level-permille` | `packages/render/retro_lighting.c` | `src/material.lua` → `PointLight` |
+| what colour does the screen go when it hurts? | `tint-*` | `packages/simulation/material_rules_host.h` | `src/material.lua` |
+
+**The seam is the same one, and it is deliberate.** Roblox already ships PBR (`SurfaceAppearance`) and shadowed
+lighting, which SHANKPIT's fixed-function path does not have; so the Luau host maps the rules onto the affordances
+Roblox *does* have (`BasePart.Reflectance` for the sphere-map reflection the C build draws by hand, per-fixture
+brightness for Quake's light styles) instead of pretending the two renderers are the same. What must not differ is
+the *answer* to "how reflective is a mirror" or "how dark can a storm make noon".
+
+### Parity, checked from both sides
+
+`PARENA/stdlib/shankpit/{lighting,material}_parity.txt` are asserted by **both**
+`SHANKPIT/packages/render/env_parity_test.c` (`make test-env-parity`) and
+`NOOBTOPIA/tests/{lighting,material}_test.lua`. The lighting fixture describes the chain the host actually runs —
+`emissive-scale` is fed the ambient *floor*, not the raw occlusion — so it cannot pass while the host wires them in
+the wrong order.
+
+### Two emitter bugs this slice found (both real, both fixed at the cause)
+
+1. **The Lua target refused n-ary operators.** `lighting_rules.prn` sums four coverage terms in one `+`, and
+   `emit_lua.c` answered `"binary operator requires exactly 2 operands"` — the entire environment matrix was
+   unauthorable for the Roblox half of the merge. Operands now fold **left** (C's own associativity), `/` nests the
+   truncating `__idiv` at every arity, and a *chained comparison* is refused by name, because `(< a b c)` means
+   `a<b<c` in the source language while a left fold would mean `(a<b)<c`.
+2. **Reserved words were passed through.** `material_rules.prn` binds a variable called `local`, so the emitter
+   wrote `local local = ...` — invalid Lua that only an interpreter rejects, while the emitter reported success.
+   Identifiers now escape Lua/Luau reserved words with a trailing underscore, on the definition **and** on every
+   reference (the same fix `emit_ts.c` carries for TypeScript's `new`/`default`).
+
+Both were found by *running* the emitted module under a real interpreter, not by reading it — the same discipline
+that found the seed-mixer divergence in slice two.
+
+### Honest limits
+
+- **Roblox is still unverified by definition.** No Studio, no place, no service writes: `src/lighting.lua` and
+  `src/material.lua` return the numbers, and no file in this slice assigns them to `Lighting` or `PointLight`.
+- **The material parity fixture is query-coded** (which question, then its inputs) rather than one row per
+  function, because this vocabulary answers eleven different questions; a malformed row is skipped by the C reader
+  and counted as a failure to reach the expected row count, not silently ignored.
+- **Chained comparisons and the Java/TypeScript targets' n-ary gap are named, not fixed.** Only the Lua target was
+  widened here, because only it blocked a real shared file.
