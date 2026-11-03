@@ -26,28 +26,42 @@ if ! command -v docker >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "[1/4] build iduna:camp locally -- a LOCAL tag, nothing is pushed and nothing is pulled"
+echo "[1/4] build iduna:camp locally from IDUNA's own Dockerfile -- nothing is pushed or pulled"
+# The production image COPYs .parena/, which is STAGED, not committed (scripts/build-image.sh stages it
+# from a sibling PARENA checkout). Stage it rather than forking the Dockerfile: camp runs what the repo
+# ships.
+if [ ! -d IDUNA/.parena ]; then
+  if [ -f IDUNA/scripts/build-image.sh ]; then
+    echo "  IDUNA/.parena missing -- staging with IDUNA/scripts/build-image.sh"
+    ( cd IDUNA && bash scripts/build-image.sh )
+  else
+    echo "  ERROR: IDUNA/.parena is missing and IDUNA/scripts/build-image.sh was not found." >&2
+    echo "         The image's Dockerfile COPYs it; stage it, then re-run." >&2
+    exit 1
+  fi
+fi
 docker build -t iduna:camp -f IDUNA/ops/docker/iduna.Dockerfile IDUNA
 
 echo "[2/4] deploy the camp stack (CAMP_HOST=${CAMP_HOST})"
 if [ "$(docker info --format '{{.Swarm.LocalNodeState}}' 2>/dev/null || echo inactive)" = "active" ]; then
   MODE=stack
   docker stack deploy -c docker-compose.camp.yml "$STACK"
-  VOLUME="${STACK}_iduna_data"
+  VOLUME="${STACK}_iduna_var"
   echo "  mode: docker swarm stack '${STACK}'"
 else
   MODE=compose
   docker compose -f docker-compose.camp.yml up -d
-  VOLUME="$(docker volume ls -q | grep -m1 'iduna_data' || true)"
+  VOLUME="$(docker volume ls -q | grep -m1 'iduna_var' || true)"
   echo "  mode: docker compose"
 fi
 
 echo "[3/4] schema bootstrap -- idempotent, and it runs against the SAME volume the service uses"
 if [ -n "${VOLUME:-}" ]; then
-  docker run --rm -v "${VOLUME}:/data" -e SQLITE_PATH=/data/iduna.db iduna:camp /app/iduna-bootstrap
+  docker run --rm # SQLITE_PATH defaults to var/iduna.db under the image's /app workdir: inside this volume.
+  -v "${VOLUME}:/app/var" iduna:camp /app/iduna-bootstrap
 else
-  echo "  SKIPPED: could not identify the iduna_data volume." >&2
-  echo "           Run: docker run --rm -v <volume>:/data iduna:camp /app/iduna-bootstrap" >&2
+  echo "  SKIPPED: could not identify the iduna_var volume." >&2
+  echo "           Run: docker run --rm -v <volume>:/app/var iduna:camp /app/iduna-bootstrap" >&2
 fi
 
 echo "[4/4] verify"

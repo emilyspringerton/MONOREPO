@@ -22,7 +22,7 @@ and nothing on either box needs the internet.
 | Piece | Runs | Where the file is |
 | --- | --- | --- |
 | Access point, DHCP, DNS | Pi Zero | `sudo-queue/98-shankpit-camp-lan-pi.sh` |
-| IDUNA (identity) | host, container **or** `go run .` | `docker-compose.camp.yml`, `IDUNA/ops/docker/iduna.Dockerfile` |
+| IDUNA (identity) | host, container **or** `go run .` | `docker-compose.camp.yml` + IDUNA's own `ops/docker/iduna.Dockerfile` |
 | WOTAN (static site) | host, container | `docker-compose.camp.yml` |
 | The game | host, **native binary** | `SHANKPIT/apps/server`, `SHANKPIT/bin/shank_lobby` |
 
@@ -36,7 +36,7 @@ identity and the static site.
 IDUNA opens MySQL only when `MYSQL_DSN` is set; with it unset it opens `SQLITE_PATH`
 (`IDUNA/main.go`, `modernc.org/sqlite`, pure Go). So the camp stack has **no database container** — the
 whole identity database is one file on the `iduna_data` volume. That is the correct size for a camp:
-`docker run --rm -v shankpit_camp_iduna_data:/data iduna:camp ...` is the backup.
+`docker run --rm -v shankpit_camp_iduna_var:/app/var ...` is the backup.
 
 ## Bring it up
 
@@ -48,6 +48,9 @@ sudo ./sudo-queue/98-shankpit-camp-lan-pi.sh
 # 2. On the host, with the USB cable in:
 CAMP_HOST=192.168.43.10 ./camp-deploy.sh
 ```
+
+The camp image is **IDUNA's own Dockerfile**, not a fork. It `COPY`s `.parena/`, which is staged by
+`IDUNA/scripts/build-image.sh` rather than committed, so `camp-deploy.sh` stages it when missing.
 
 `camp-deploy.sh` builds `iduna:camp` locally (nothing is pulled or pushed), deploys with
 `docker stack deploy` when swarm is active and `docker compose up -d` otherwise, runs the idempotent
