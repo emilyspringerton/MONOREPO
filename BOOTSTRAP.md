@@ -127,6 +127,14 @@ emily apples post -t completion -r EMILY --run-id "$(emily session current)" "<t
   mode rejects it and every module "fails" with a misleading `-mod may only be set to readonly`.
   Same step-2 blocker as the earlier run: `gcloud auth list` → `No credentialed accounts`, so the
   project/cluster/IDUNA half still needs the founder's `gcloud auth login`.
+- 2026-11-04 (third run, same `/content/MONOREPO` box, root, gcloud at `/tools/google-cloud-sdk`):
+  toolchain was gone again, so §2-§6 were re-run. Go 1.26.8 → `~/.local/go`, kubectl v1.37.2
+  standalone → `~/.local/bin`, eight repos cloned (EDIS, PRRJECT_FATBABY, emily.cli, gpt2-alpine-c,
+  OKEMILY, NOOBTOPIA, NORN, SKULDMARK — PARENA/BIG_O/WOTAN already present), all seven `go.work`
+  modules build clean, `emily` 1.0.0 installed, `/home/fatbaby` symlinked and writable, existing
+  session `sess-20261103-0121-04484fc1` picked up. **Step 2 still blocked:** no credentialed gcloud
+  account, so `get-credentials` fails with "You do not currently have an active account selected".
+  `gcloud config set project` does now stick — only the account is missing.
 
 ## 2026-11-03 — what `make lobby` actually needs on a fresh box
 
