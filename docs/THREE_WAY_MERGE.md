@@ -247,6 +247,16 @@ the wrong order.
 Both were found by *running* the emitted module under a real interpreter, not by reading it — the same discipline
 that found the seed-mixer divergence in slice two.
 
+### Honest limits (third slice)
+
+- **Roblox is still unverified by definition.** No Studio, no place, no service writes: `src/lighting.lua` and
+  `src/material.lua` return the numbers, and no file in this slice assigns them to `Lighting` or `PointLight`.
+- **The material parity fixture is query-coded** (which question, then its inputs) rather than one row per
+  function, because this vocabulary answers eleven different questions; a malformed row is skipped by the C reader
+  and counted as a failure to reach the expected row count, not silently ignored.
+- **Chained comparisons and the Java/TypeScript targets' n-ary gap are named, not fixed.** Only the Lua target was
+  widened here, because only it blocked a real shared file.
+
 ## 3d. The fourth slice: the sky — day/night, weather, and what fog does (2026-11-03)
 
 The lighting matrix resolves an atmosphere but takes the weather *intensities* on faith, and it owns no clock at
@@ -313,26 +323,48 @@ notices until the two worlds feel different for a reason nobody picked:
   rows while still printing a passing-looking count; the "read at least 20 rows" check is what turned that green
   into a red. A parity suite must assert that it read something.
 
-Parity: `PARENA/stdlib/shankpit/cozy_parity.txt` (103 rows rows), asserted by
+Parity: `PARENA/stdlib/shankpit/cozy_parity.txt` (103 rows), asserted by
 `SHANKPIT/packages/simulation/cozy_test.c` (`make test-cozy`, 128 checks) and `NOOBTOPIA/tests/cozy_test.lua`
 (137 checks).
 
+### The last mile: props (2026-11-04)
+
+`cozy.lua` and its rules were tested and unreachable — no dandelion stood anywhere to be kicked. This repository
+still ships no art, so instead of tagging art nobody has, the props are **built from data**:
+`NOOBTOPIA/src/props.lua` holds six deterministic props (three dandelions, three trees), and
+`src/noobtopia.lua` turns each into parts with a `ProximityPrompt`. Three decisions went into the pure module
+because they are the ones a screen can get wrong:
+
+- **The street** is data, and is handed out as copies, so a caller moving a prop cannot move it for everybody. All
+  six stand outside the ice rink — a cosy verb on skates is a different game.
+- **The reference trunk.** The rules speak permille of a reference trunk, because a rule about girth should not know
+  about studs. `TRUNK_FULL_STUDS = 6` is that reference; a 2.4-stud trunk lands *exactly* on the rules' 400, which
+  the test pins. One tree is deliberately a **sapling**: a trunk under 400 permille is a refusal the rules own, and a
+  street of only huggable trees would hide it.
+- **A refusal names its cause.** `Props.interact` returns the verb, the amount and the comfort reached, and
+  `reason` (`closed` / `wait` / `thin` / `unknown`) when the press was refused, each with a sentence the world owns.
+  A press that silently does nothing teaches a player not to press.
+
+- **The actor is the player.** A cosy verb is something you do with your hands, so the state is per player, seeded
+  by `UserId` (stable across a session, distinct per player, exactly representable), and two players never share a
+  cooldown. Comfort is republished as a `Cozy` attribute so a HUD reads the number rather than keeping its own.
+- **Outranking is part of the answer.** At night with a cooldown still running, the first version said "not again
+  just yet"; night is the durable reason, so it now wins. A refusal that names the wrong cause costs the player a
+  retry they cannot win.
+- **Pace is the host's.** Comfort drifts one permille per 0.25 s tick back toward IDLE, and that pace is stated here
+  rather than smuggled into the `.prn`.
+
+Verified: `lua tests/props_test.lua` **109 checks** — measurement at the exact threshold, every prop's kind,
+reach and placement, both verbs, and every refusal proven to change *nothing* (comfort, seed, counts and both
+timestamps are snapshotted and compared; a half-applied refusal is how a world drifts from its rules while the
+rules' own tests stay green).
+
 ### Honest limits
 
-- **No interaction hook in the Roblox place.** `src/cozy.lua` is tested but `src/noobtopia.lua` does not offer a
-  prompt: there is no dandelion or tree art in this repository to tag, so inventing a `CollectionService` contract
-  now would be dead code pretending to be a feature.
+- **The Roblox half of the props has never run.** The parts, the prompts, the seed puffs and the leaning tree are
+  written and reviewed; the decisions they carry are in `props.lua`, which is executed. This is a real gap: a prompt
+  that never appears and one that works look identical in this repository.
 - **SHANKPIT's lobby does not call the host yet.** `cozy.h` is header-only and proven by `cozy_test`, but the lobby
   cannot be compiled on this box, so nothing in the running game has kicked anything.
 - **Rules, not feel.** Whether 60 permille of comfort actually feels like anything is a human question no test here
   answers.
-
-### Honest limits
-
-- **Roblox is still unverified by definition.** No Studio, no place, no service writes: `src/lighting.lua` and
-  `src/material.lua` return the numbers, and no file in this slice assigns them to `Lighting` or `PointLight`.
-- **The material parity fixture is query-coded** (which question, then its inputs) rather than one row per
-  function, because this vocabulary answers eleven different questions; a malformed row is skipped by the C reader
-  and counted as a failure to reach the expected row count, not silently ignored.
-- **Chained comparisons and the Java/TypeScript targets' n-ary gap are named, not fixed.** Only the Lua target was
-  widened here, because only it blocked a real shared file.
