@@ -135,6 +135,17 @@ emily apples post -t completion -r EMILY --run-id "$(emily session current)" "<t
   session `sess-20261103-0121-04484fc1` picked up. **Step 2 still blocked:** no credentialed gcloud
   account, so `get-credentials` fails with "You do not currently have an active account selected".
   `gcloud config set project` does now stick — only the account is missing.
+- 2026-11-04 (fourth run, same `/content/MONOREPO` box, root, gcloud at `/tools/google-cloud-sdk`):
+  toolchain gone again, so §2-§6 re-ran. Go 1.26.8 → `~/.local/go`, kubectl v1.37.2 standalone →
+  `~/.local/bin` (the `gcloud components install` root error is still live on this image, so the
+  upstream kubectl path remains the only working one), eight repos cloned (PRRJECT_FATBABY,
+  emily.cli, EDIS, gpt2-alpine-c, OKEMILY, NOOBTOPIA, NORN, SKULDMARK), all seven `go.work` modules
+  build clean, `emily` 1.0.0 installed, `/home/fatbaby` symlinked and writable, PATH and
+  `USE_GKE_GCLOUD_AUTH_PLUGIN` now persisted in `~/.bashrc` so step 0 isn't hand-typed each shell.
+  Existing session `sess-20261103-0121-04484fc1` picked up. **Step 2 blocked again:** `gcloud auth
+  list` → `No credentialed accounts`, so `get-credentials` fails on "no active account" and
+  `kubectl get pods -n emily` returns `the server could not find the requested resource`. Same
+  verdict as the two runs before it: nothing local substitutes for the founder's `gcloud auth login`.
 
 ## 2026-11-03 — what `make lobby` actually needs on a fresh box
 
