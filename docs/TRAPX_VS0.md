@@ -14,6 +14,7 @@ file is the engineering record of the first playable slice, and it follows the s
 | the C host | `SHANKPIT/packages/simulation/trapx.{h,c}` | `make test-trapx` — 169 checks, 88 rows |
 | the mods-first bus | `SHANKPIT/packages/simulation/trapx_events.{h,c}` | same test |
 | the browser host | `WOTAN/trapx/trapx-city.js` + `trapx-host.js` | `node scripts/trapx-rules-test.mjs` — 140 checks, 88 rows |
+| the wasm city | `PARENA/stdlib/trapx/web/{tp_mem,tp_city,tp_api}.prn` → `WOTAN/trapx/trapx.wasm` | built by `scripts/build_trapx_wasm.sh`; 0 imports, no allocator, fixed 8 MB; pinned to the JS city by `scripts/trapx_wasm_test.mjs` |
 | the page | `WOTAN/trapx/index.html`, `css/wotan-trapx.css` | written, never opened in a browser |
 | the identity | `IDUNA` `games.Registry["trapx"]` + migration | `go build` green, no route yet |
 
@@ -68,8 +69,14 @@ zero imports, no allocator, fixed memory. There is no shared ABI to combine, so 
 **one shell and one identity** — the TRAPX page embeds both and shares the IDUNA session — not one merged binary.
 Faking a merge would have been the exact kind of claim this repo refuses to make.
 
-No wasm was built for this slice, and none was needed: the city is integer rules. This box has no `clang`,
-`wasm-ld` or `ziglang`, so the two games are the builds that were already committed.
+**Corrected 2026-11-04:** the sentence that stood here ("No wasm was built for this slice, and none was
+needed") was true of the first slice and is no longer true of the repo. The city now IS a wasm module:
+`PARENA/stdlib/trapx/web/tp_{mem,city,api}.prn` compiled to wasm32 by `scripts/build_trapx_wasm.sh`
+(parena -> opt -> llc -> wasm-ld), shipped as `WOTAN/trapx/trapx.wasm`. It holds the same promises as the
+other four web games: **no allocator, zero imports, fixed 8 MB memory**, and every threshold is still a
+call into `trapx_rules.prn` rather than a literal in the host. The earlier claim's reason is also worth
+keeping straight: the box that wrote the first slice had no `clang`/`wasm-ld`/`ziglang`. That was a
+statement about a machine, not about the design -- LLVM 18 is installable, and here it is installed.
 
 ## Limits, named
 
