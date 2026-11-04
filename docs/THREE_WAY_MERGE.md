@@ -289,6 +289,44 @@ Parity: `PARENA/stdlib/shankpit/sky_parity.txt` (87 rows), asserted by `SHANKPIT
 - **Roblox remains unverified.** No Studio, so `Lighting.ClockTime` and the ambient writes are decisions that have
   never been observed landing.
 
+## 3e. The fifth slice: the cosy verbs (2026-11-03)
+
+Not every shared decision is about light. Two verbs now live in `PARENA/stdlib/shankpit/cozy_rules.prn` because
+"what does kicking a dandelion actually do" is precisely the question each host answers differently and nobody
+notices until the two worlds feel different for a reason nobody picked:
+
+| Verb | Gate | Worth | Recovery |
+|---|---|---|---|
+| kick a dandelion | it *is* a dandelion, off a 900 ms cooldown, and the sun is at least 250 permille — they close at night | +60 comfort, 3–6 seeds from the actor's own seed | comfort drifts back at 1 permille/tick |
+| hug a tree | trunk at least 400 permille thick, off an 8 s cooldown | +120 comfort, scaled 1000/700/500/350/250/200 by how many hugs that tree gave today | a new day resets the count |
+
+- **Cosy cannot be a weapon.** No damage, no knockback, no score. Comfort is capped at 1000, and a tree's worth
+  decays by arithmetic instead of by a cooldown a player must sit through.
+- **A closed dandelion is a refusal, not a smaller number.** `cozy-kick-allowed` returns 0 at night, so no host is
+  tempted to scale it into a "night bonus" nobody decided.
+- **Determinism.** The seed picks the puff count and the flavour line, so a replay and a second world match.
+- **The host owns the clock**, and must know the difference between "never" and "now". Both hosts initially
+  measured a cooldown from timestamp 0, so the *first* hug of a session was silently refused; the shared fixture
+  cannot see that bug because it only asks the rules, and the behaviour checks on both sides caught it. The
+  `started` flag is the fix, and it exists because a rule cannot know whether a timestamp means anything.
+- **A fixture nobody reads is not a test.** The C reader demanded six fields from five-field rows and asserted zero
+  rows while still printing a passing-looking count; the "read at least 20 rows" check is what turned that green
+  into a red. A parity suite must assert that it read something.
+
+Parity: `PARENA/stdlib/shankpit/cozy_parity.txt` (103 rows rows), asserted by
+`SHANKPIT/packages/simulation/cozy_test.c` (`make test-cozy`, 128 checks) and `NOOBTOPIA/tests/cozy_test.lua`
+(137 checks).
+
+### Honest limits
+
+- **No interaction hook in the Roblox place.** `src/cozy.lua` is tested but `src/noobtopia.lua` does not offer a
+  prompt: there is no dandelion or tree art in this repository to tag, so inventing a `CollectionService` contract
+  now would be dead code pretending to be a feature.
+- **SHANKPIT's lobby does not call the host yet.** `cozy.h` is header-only and proven by `cozy_test`, but the lobby
+  cannot be compiled on this box, so nothing in the running game has kicked anything.
+- **Rules, not feel.** Whether 60 permille of comfort actually feels like anything is a human question no test here
+  answers.
+
 ### Honest limits
 
 - **Roblox is still unverified by definition.** No Studio, no place, no service writes: `src/lighting.lua` and
