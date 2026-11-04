@@ -247,6 +247,48 @@ the wrong order.
 Both were found by *running* the emitted module under a real interpreter, not by reading it — the same discipline
 that found the seed-mixer divergence in slice two.
 
+## 3d. The fourth slice: the sky — day/night, weather, and what fog does (2026-11-03)
+
+The lighting matrix resolves an atmosphere but takes the weather *intensities* on faith, and it owns no clock at
+all. So both worlds were about to invent "how overcast is overcast", and a Roblox place would have invented numbers
+SHANKPIT's C would never agree with. `PARENA/stdlib/shankpit/sky_rules.prn` now decides that, once:
+
+| Question | Answer | Consumed by |
+|---|---|---|
+| how much sun is there at 14:20? | `sky-sun-permille` (integer trapezoid, not a cosine) | both hosts |
+| is it night? | `sky-night` (sun below 250 permille) | both hosts |
+| what is `ClockTime`? | `sky-clock-hundredths` — hours×100, because the target's representation is the target's | NOOBTOPIA |
+| how covered is "overcast"? | `sky-cover` 700, storm 1000, fog 550 | both |
+| what does each weather do? | `sky-rain`, `sky-storm`, `sky-fog-wash` | both |
+| how far can you see in fog? | `sky-visibility` — base per weather × 400..1000 permille of the light | both |
+| when does lightning strike? | `sky-flash-permille` — 240-tick cadence, six-tick decay, storms only | both |
+
+**Night is not weather, and that distinction is the whole design.** Folding the sun into `cover` would have been a
+lie *and* would have broken the matrix's own promise (occlusion is capped at 780 so a storm reads as dim daylight,
+never night). The sky therefore reports `sun` separately, and `wiring.lua` spends it on `OutdoorAmbient` only: the
+floored indoor ambient stays legible while the outdoors actually gets dark (250 permille at midnight).
+
+**Visibility is a reading, not a distance.** Clear weather returns 0 — "there is no fog to draw" — which the matrix
+already treats as no fog at all. A clear midnight must not conjure 1200 units of haze, so the *scaling* by daylight
+only applies to weathers that have fog in them.
+
+**Bolts are deterministic.** A 240-tick cadence with a six-tick decay means a replay reproduces the sky, and the two
+worlds agree on when the thunder happens.
+
+Parity: `PARENA/stdlib/shankpit/sky_parity.txt` (87 rows), asserted by `SHANKPIT/packages/render/sky_parity_test.c`
+(`make test-sky-parity`) and `NOOBTOPIA/tests/sky_test.lua`.
+
+### Honest limits
+
+- **SHANKPIT does not yet consume it.** `packages/simulation/sky_rules.c` is generated and asserted, but nothing in
+  the renderer calls it: `packages/render/sky_weather.c` still runs its own profile, and the lobby cannot be compiled
+  on this box. The Roblox side is wired; the C side is generated + tested, which is a real gap and not a finished
+  handshake.
+- **No weather *transitions*.** The weather is a state a place sets, not a front that moves in: nothing here decides
+  when a storm starts, only what a storm is.
+- **Roblox remains unverified.** No Studio, so `Lighting.ClockTime` and the ambient writes are decisions that have
+  never been observed landing.
+
 ### Honest limits
 
 - **Roblox is still unverified by definition.** No Studio, no place, no service writes: `src/lighting.lua` and
