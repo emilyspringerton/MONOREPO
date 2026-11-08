@@ -157,6 +157,21 @@ emily apples post -t completion -r EMILY --run-id "$(emily session current)" "<t
   needs the hand-built tag. **Step 2 blocked as before:** `No credentialed accounts` — needs the founder's
   `gcloud auth login`.
 
+## 2026-11-08 — LLVM 18 wasm toolchain without sudo (PARENA wasm builds)
+
+`build_brawlpit_wasm.sh` and the other PARENA wasm scripts expect LLVM 18 at `~/.local/opt/llvm-toolchain`.
+`wasm-ld` lives in **`lld-18`**, which the recipe in `PARENA/docs/LLVM_BACKEND_NORTHSTAR.md` leaves out.
+Verified on this box:
+
+```
+mkdir -p /tmp/llvmdeb && cd /tmp/llvmdeb
+apt-get download llvm-18 lld-18 libllvm18 liblld-18
+for d in *.deb; do dpkg-deb -x "$d" ~/.local/opt/llvm-toolchain; done
+LLVM_TOOLCHAIN_ROOT=~/.local/opt/llvm-toolchain PARENA/scripts/build_brawlpit_wasm.sh /tmp/bp.wasm
+```
+
+The script's zero-import check only runs when `node` is installed, and it prints "0 imports" either way.
+
 ## 2026-11-03 — what `make lobby` actually needs on a fresh box
 
 Found while wiring the salvage slices. Seven packages and two sibling checkouts, in the order they bite:
