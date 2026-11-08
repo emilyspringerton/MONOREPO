@@ -191,6 +191,16 @@ for l in $(find . -maxdepth 1 -type l); do [ -e "$l" ] || { t=$(readlink "$l");
 # ~/.bashrc sources it. Then clone the EDITOR.GAME and PELLEGRINO siblings as below.
 ```
 
+mingw-w64 the same way (for `make check-windows` / `make check-strict-t0`'s Windows half):
+
+```
+apt-get download binutils-mingw-w64-x86-64 gcc-mingw-w64-base gcc-mingw-w64-x86-64-posix \
+  gcc-mingw-w64-x86-64-posix-runtime mingw-w64-common mingw-w64-x86-64-dev
+for d in *.deb; do dpkg-deb -x "$d" ~/.local/opt/mingw; done
+ln -sf x86_64-w64-mingw32-gcc-13-posix ~/.local/opt/mingw/usr/bin/x86_64-w64-mingw32-gcc
+export PATH="$HOME/.local/opt/mingw/usr/bin:$PATH"     # verified: links a PE32+ .exe
+```
+
 ## 2026-11-03 — what `make lobby` actually needs on a fresh box
 
 Found while wiring the salvage slices. Seven packages and two sibling checkouts, in the order they bite:
