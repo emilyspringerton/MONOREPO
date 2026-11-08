@@ -146,6 +146,16 @@ emily apples post -t completion -r EMILY --run-id "$(emily session current)" "<t
   list` → `No credentialed accounts`, so `get-credentials` fails on "no active account" and
   `kubectl get pods -n emily` returns `the server could not find the requested resource`. Same
   verdict as the two runs before it: nothing local substitutes for the founder's `gcloud auth login`.
+- 2026-11-08 (`/home/ubuntu/MONOREPO` box, user `ubuntu`, **no sudo**, gcloud at `/tools/google-cloud-sdk`):
+  EMILY/IDUNA/SHANKPIT/PARENA/GOLDENBAND present; eleven repos cloned (PRRJECT_FATBABY, emily.cli, EDIS,
+  gpt2-alpine-c, BIG_O, WOTAN, OKEMILY, NOOBTOPIA, NORN, SKULDMARK). System `/usr/bin/go` auto-fetched
+  the 1.26.8 toolchain via `GOTOOLCHAIN`, so no `~/.local/go` install was needed. kubectl v1.37.2 standalone
+  → `~/.local/bin`, all seven `go.work` modules build clean, `emily` 1.0.0 installed. **New trap:** the image
+  exports `CLOUDSDK_CONFIG=/content/.config`, which `ubuntu` can't write, so every gcloud command errors with
+  `Unable to create private file [/content/.config/credentials.db]`. Fix: `export CLOUDSDK_CONFIG=$HOME/.config/gcloud`
+  (now in `~/.bashrc` with PATH). `/home/fatbaby` symlink not made (no sudo), so `emily session new` still
+  needs the hand-built tag. **Step 2 blocked as before:** `No credentialed accounts` — needs the founder's
+  `gcloud auth login`.
 
 ## 2026-11-03 — what `make lobby` actually needs on a fresh box
 
