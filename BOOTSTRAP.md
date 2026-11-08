@@ -172,6 +172,25 @@ LLVM_TOOLCHAIN_ROOT=~/.local/opt/llvm-toolchain PARENA/scripts/build_brawlpit_wa
 
 The script's zero-import check only runs when `node` is installed, and it prints "0 imports" either way.
 
+### Same day — `make lobby` without sudo
+
+No `apt-get install` here, so the dev headers go into a private prefix and an env file wires them in.
+Verified: `make lobby` links `bin/shank_lobby` with real EDITOR.GAME widgets (`make print-editor-mode`).
+
+```
+mkdir -p /tmp/sysdev && cd /tmp/sysdev
+apt-get download libsdl2-dev libsdl2-ttf-dev libsdl2-ttf-2.0-0 libgl-dev libglx-dev libglu1-mesa-dev \
+  libglu1-mesa libmbedtls-dev libmbedcrypto7t64 libmbedtls14t64 libmbedx509-1t64 libx11-dev x11proto-dev \
+  libegl-dev libgles-dev libopengl-dev libopengl0
+for d in *.deb; do dpkg-deb -x "$d" ~/.local/opt/sysdev; done
+# the -dev .so symlinks point at runtime libs that live in /usr/lib, not the prefix: re-point them
+cd ~/.local/opt/sysdev/usr/lib/x86_64-linux-gnu
+for l in $(find . -maxdepth 1 -type l); do [ -e "$l" ] || { t=$(readlink "$l");
+  [ -e /usr/lib/x86_64-linux-gnu/$t ] && ln -sf /usr/lib/x86_64-linux-gnu/$t "$l"; }; done
+# ~/.local/opt/sysdev/env.sh exports CPATH, LIBRARY_PATH, LD_LIBRARY_PATH, PKG_CONFIG_PATH at that prefix;
+# ~/.bashrc sources it. Then clone the EDITOR.GAME and PELLEGRINO siblings as below.
+```
+
 ## 2026-11-03 — what `make lobby` actually needs on a fresh box
 
 Found while wiring the salvage slices. Seven packages and two sibling checkouts, in the order they bite:
