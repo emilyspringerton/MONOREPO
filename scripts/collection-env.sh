@@ -54,6 +54,15 @@ export COLLECTION_JOURNAL_KEEP="${COLLECTION_JOURNAL_KEEP:-20000}"
 export COLLECTION_JOURNAL_POLL_SECONDS="${COLLECTION_JOURNAL_POLL_SECONDS:-5}"
 export FAFNIR_ADDON="${FAFNIR_ADDON:-FafnirsBed}"
 export FAFNIR_VAR="${FAFNIR_VAR:-FafnirsBedDB}"
+# The fun addons (spec 70, 65, 72, 73): addon folder and SavedVariables global for each.
+export HRUNGNIR_ADDON="${HRUNGNIR_ADDON:-Hrungnir}"
+export HRUNGNIR_VAR="${HRUNGNIR_VAR:-HrungnirDB}"
+export RATATOSKR_ADDON="${RATATOSKR_ADDON:-RatatoskrRoll}"
+export RATATOSKR_VAR="${RATATOSKR_VAR:-RatatoskrRollDB}"
+export VOLVA_ADDON="${VOLVA_ADDON:-Volva}"
+export VOLVA_VAR="${VOLVA_VAR:-VolvaDB}"
+export SAGA_ADDON="${SAGA_ADDON:-SagaOfFools}"
+export SAGA_VAR="${SAGA_VAR:-SagaOfFoolsDB}"
 export COLLECTION_CLIENT_OUT="${COLLECTION_CLIENT_OUT:-$PARENA_DIR/build/wow/client}"
 
 # --- git over SSH ---------------------------------------------------------------------------------
@@ -77,6 +86,6 @@ unset _here _m
 
 # `. collection-env.sh --print` shows the resolved values.
 if [ "${1:-}" = "--print" ]; then
-  env | grep -E '^(COLLECTION_|WOW_|MSYS2_|MSYSTEM|PARENA_|LUA51|REFLUXCORE_|FAFNIR_|PRRJECT_)' | sort
+  env | grep -E '^(COLLECTION_|WOW_|MSYS2_|MSYSTEM|PARENA_|LUA51|REFLUXCORE_|FAFNIR_|HRUNGNIR_|RATATOSKR_|VOLVA_|SAGA_|PRRJECT_)' | sort
   [ -n "${WOW_INTERFACE:-}" ] || echo "WOW_INTERFACE is unset (packagers will refuse; run the in-game probe)"
 fi
