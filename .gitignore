@@ -11,3 +11,4 @@
 # per-machine overrides for scripts/collection-env.sh
 /collection.local.env
 /SPGF/
+/PELLEGRINO/
