@@ -54,6 +54,11 @@ export COLLECTION_JOURNAL_KEEP="${COLLECTION_JOURNAL_KEEP:-20000}"
 export COLLECTION_JOURNAL_POLL_SECONDS="${COLLECTION_JOURNAL_POLL_SECONDS:-5}"
 export FAFNIR_ADDON="${FAFNIR_ADDON:-FafnirsBed}"
 export FAFNIR_VAR="${FAFNIR_VAR:-FafnirsBedDB}"
+# The Character Board (spec addon 1): folder and SavedVariables global, and where the progression CSVs go
+# (PARENA/scripts/collection-csv.sh) -- outside every repository, with the rest of the play data (D-8).
+export BOARD_ADDON="${BOARD_ADDON:-CharacterBoard}"
+export BOARD_VAR="${BOARD_VAR:-CharacterBoardDB}"
+export COLLECTION_CSV_DIR="${COLLECTION_CSV_DIR:-$COLLECTION_WORKSPACE/data/collection/csv}"
 # The fun addons (spec 70, 65, 72, 73): addon folder and SavedVariables global for each.
 export HRUNGNIR_ADDON="${HRUNGNIR_ADDON:-Hrungnir}"
 export HRUNGNIR_VAR="${HRUNGNIR_VAR:-HrungnirDB}"
@@ -86,6 +91,6 @@ unset _here _m
 
 # `. collection-env.sh --print` shows the resolved values.
 if [ "${1:-}" = "--print" ]; then
-  env | grep -E '^(COLLECTION_|WOW_|MSYS2_|MSYSTEM|PARENA_|LUA51|REFLUXCORE_|FAFNIR_|HRUNGNIR_|RATATOSKR_|VOLVA_|SAGA_|PRRJECT_)' | sort
+  env | grep -E '^(COLLECTION_|WOW_|MSYS2_|MSYSTEM|PARENA_|LUA51|REFLUXCORE_|FAFNIR_|BOARD_|HRUNGNIR_|RATATOSKR_|VOLVA_|SAGA_|PRRJECT_)' | sort
   [ -n "${WOW_INTERFACE:-}" ] || echo "WOW_INTERFACE is unset (packagers will refuse; run the in-game probe)"
 fi
