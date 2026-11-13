@@ -53,6 +53,25 @@ first such value. PARENA's own new targets follow the same rule with `?=` (`LUA5
 | `LUA51`, `REFLUXCORE_OUT` | `lua5.1`, `$PARENA_DIR/build/wow` | REFLUX tests, RefluxCore packager |
 | `COLLECTION_JOURNAL_ADDON`, `COLLECTION_JOURNAL_VAR` | `CollectionJournal`, `CollectionJournalDB` | the journal addon and the SavedVariables reader |
 | `COLLECTION_EVENTS` | `$COLLECTION_WORKSPACE/data/collection/events.ndjson` -- outside every repo (D-8) | the SavedVariables reader |
+| `COLLECTION_JOURNAL_KEEP`, `COLLECTION_JOURNAL_POLL_SECONDS` | `20000` rows, `5` s | the packaged journal addon |
+| `FAFNIR_ADDON`, `FAFNIR_VAR` | `FafnirsBed`, `FafnirsBedDB` | Fafnir's Bed (inventory manager) |
+| `COLLECTION_CLIENT_OUT` | `$PARENA_DIR/build/wow/client` | `PARENA/scripts/wow-package-collection.sh` |
+
+### The client, and how it ships
+
+`PARENA/scripts/wow-package-collection.sh [--zip] [--install]` builds the client in one folder:
+
+* `AddOns/RefluxCore`
+* `AddOns/CollectionJournal` (`/cov`)
+* `AddOns/FafnirsBed`, **Fafnir's Bed**, the inventory manager (spec addon 2, named from the spec's own
+  list). `/fafnir` gives net inventory and account gold; `/fafnir <name|id|link>` gives who has an item and
+  its net count.
+* `reader/read-journal.sh`
+
+PARENA CI (`collection_client` job) runs every test on each push, including the packaged addons played end
+to end in a stubbed client. On a green push to `main`, the existing auto-release attaches
+`CollectionOfValue-<sha>.zip`, **once the repository variable `WOW_INTERFACE` is set**. Until then CI
+annotates the run that the zip was skipped, rather than shipping a guessed interface number.
 | `COLLECTION_SSH_KEY`, `GIT_SSH_COMMAND` | `~/.ssh/id_ed25519_shankpit` | git over SSH |
 
 ## 1. Step 1 -- the WoW Forever addon API
@@ -211,4 +230,6 @@ Format: what the spec says, what the source says, the resolution.
 | 4 In-game REFLUX library | **Built** = RefluxCore (section 0) |
 | 5 Event record | **v1 defined** in `PARENA/stdlib/collection/journal.prn`, mapped onto the Go envelope (D-2) |
 | 6 SavedVariables bridge | **Both halves built, neither run against the real client.** In game (PARENA 76a5d50, 11e57a0; 53/53 under Lua 5.1): REFLUX poll -> per-character journal, overwritten rows counted in `lost`, a size cap (`journal-trim`) that drops from the low end and never moves `nextSeq`. Outside (PARENA 7f95946, `scripts/collection-journal-read.sh`, 38/38 + wrapper check): reads every `Account/*/*/*/SavedVariables/CollectionJournal.lua` with no globals and an instruction budget, appends new rows to `COLLECTION_EVENTS` as eventstore `Event` lines (checked to unmarshal into the Go struct), dedups on `character:seq`, reports trimmed-before-read gaps (exit 3). Not yet: the addon glue and `.toc` (need the probe); feeding the NDJSON into the Go store's `Append` (Step 7) |
+| Addon 2 Unified Inventory | **Built as Fafnir's Bed** (PARENA f32974c model, 1a4e173 client; client_test 36/36 under Lua 5.1): bags, bank, mail, gold, net inventory, who-has-this; changes dispatched as REFLUX 2010-2012 and journalled. Not yet run in the real client (needs the probe) |
+| Client + CI | **Built** (PARENA 1a4e173, 1daf0ba): one package, tested on every push, attached to each auto-release once `WOW_INTERFACE` is set as a repository variable. PARENA CI was red (Windows self-hosting step, winnt.h `TokenType`) and no release had been cut since 2026-10-02; fixed in a70bf8a |
 | 7-14 | Not started |
