@@ -89,7 +89,8 @@ annotates the run that the zip was skipped, rather than shipping a guessed inter
 | SavedVariables location (per account number) | `_forever_\WTF\Account\<account#>\SavedVariables\` | directory listing |
 | Macro storage | `_forever_\WTF\Account\<account#>\macros-cache.txt`, with a `.old` backup | directory listing |
 | `macros-cache.txt` shape | one entry = a header line (`<kind> <n> <16-hex id> "<name>" "<icon id>"`), the macro body lines, then a line `END` | structure of the founder's current file (2 macros); bodies not recorded here |
-| Third-party addon folder | `_forever_\Interface\AddOns` exists and is currently empty | directory listing |
+| Third-party addon folder | `_forever_\Interface\AddOns`; empty until the Collection client was installed there on 2026-11-13 | directory listing |
+| **TOC `## Interface:` number** | **16001** (matches client 1.60.1) -- `select(4, GetBuildInfo())`, run in game by the founder 2026-11-13 | the probe; kept in `collection.local.env` and needed as PARENA's repository variable `WOW_INTERFACE` for CI to attach the client zip |
 
 ### Not observable from disk -- needs one in-game probe
 
@@ -103,7 +104,7 @@ Run this once in game, in the chat box, and paste the output back:
 
 | Fact | Retail baseline (UNCONFIRMED on Forever) | Why it matters |
 | --- | --- | --- |
-| TOC `## Interface:` number | a retail-style 6-digit number; the real value is the 4th value printed by the probe | every shipped `.toc` must declare it or the client marks the addon out of date |
+| TOC `## Interface:` number | **confirmed: 16001** (table above) -- not the retail-style 6-digit number this row expected | every shipped `.toc` must declare it or the client marks the addon out of date |
 | Account macro slots | 120 (`MAX_ACCOUNT_MACROS`) | MacroSync's load target and prune rule |
 | Per-character macro slots | 18 (`MAX_CHARACTER_MACROS`) | same |
 | Macro body length | 255 characters | the Macau editor's hard cap and the packager's check |
@@ -231,5 +232,5 @@ Format: what the spec says, what the source says, the resolution.
 | 5 Event record | **v1 defined** in `PARENA/stdlib/collection/journal.prn`, mapped onto the Go envelope (D-2) |
 | 6 SavedVariables bridge | **Both halves built, neither run against the real client.** In game (PARENA 76a5d50, 11e57a0; 53/53 under Lua 5.1): REFLUX poll -> per-character journal, overwritten rows counted in `lost`, a size cap (`journal-trim`) that drops from the low end and never moves `nextSeq`. Outside (PARENA 7f95946, `scripts/collection-journal-read.sh`, 38/38 + wrapper check): reads every `Account/*/*/*/SavedVariables/CollectionJournal.lua` with no globals and an instruction budget, appends new rows to `COLLECTION_EVENTS` as eventstore `Event` lines (checked to unmarshal into the Go struct), dedups on `character:seq`, reports trimmed-before-read gaps (exit 3). Not yet: the addon glue and `.toc` (need the probe); feeding the NDJSON into the Go store's `Append` (Step 7) |
 | Addon 2 Unified Inventory | **Built as Fafnir's Bed** (PARENA f32974c model, 1a4e173 client; client_test 36/36 under Lua 5.1): bags, bank, mail, gold, net inventory, who-has-this; changes dispatched as REFLUX 2010-2012 and journalled. Not yet run in the real client (needs the probe) |
-| Client + CI | **Built** (PARENA 1a4e173, 1daf0ba): one package, tested on every push, attached to each auto-release once `WOW_INTERFACE` is set as a repository variable. PARENA CI was red (Windows self-hosting step, winnt.h `TokenType`) and no release had been cut since 2026-10-02; fixed in a70bf8a |
+| Client + CI | **Built and installed** (PARENA 1a4e173, 1daf0ba): one package, tested on every push; installed into the founder's client 2026-11-13 with interface 16001. CI attaches the zip to releases once 16001 is set as PARENA's repository variable `WOW_INTERFACE`. PARENA CI was red (Windows self-hosting step, winnt.h `TokenType`) and no release had been cut since 2026-10-02; fixed in a70bf8a |
 | 7-14 | Not started |
