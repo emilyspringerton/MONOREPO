@@ -91,6 +91,13 @@ annotates the run that the zip was skipped, rather than shipping a guessed inter
 | `macros-cache.txt` shape | one entry = a header line (`<kind> <n> <16-hex id> "<name>" "<icon id>"`), the macro body lines, then a line `END` | structure of the founder's current file (2 macros); bodies not recorded here |
 | Third-party addon folder | `_forever_\Interface\AddOns`; empty until the Collection client was installed there on 2026-11-13 | directory listing |
 | **TOC `## Interface:` number** | **16001** (matches client 1.60.1) -- `select(4, GetBuildInfo())`, run in game by the founder 2026-11-13 | the probe; kept in `collection.local.env` and needed as PARENA's repository variable `WOW_INTERFACE` for CI to attach the client zip |
+| SavedVariables flush | written on `/reload` / logout: the first journal file appeared after the founder's first session | `CollectionJournal.lua` under `WTF\Account\<account#>\<realm folder>\<character folder>\SavedVariables\`, 2026-11-13 |
+| Account-wide SavedVariables | `WTF\Account\<account#>\SavedVariables\FafnirsBed.lua` | same session |
+| Realm name vs. folder | `GetRealmName()` returns the display name (`CAMWOW US2 Realm 2 PvP`); the WTF folder names differ from it (a short realm folder, a character folder) -- so characters are keyed by `name-GetRealmName()`, never by folder | journal rows vs. the file's path |
+| `C_Map.GetBestMapForUnit` / `GetPlayerMapPosition` | present and working: zone 1420, x/y on every journal row | journal rows |
+| A container (bag) API | present and working: bags read item 4540 x5, 117 x4, 6948 x1, then the -5 when the bread left. (Which form -- `C_Container` or the old globals -- is not yet recorded; Fafnir's Bed handles both) | journal rows 2010/2012 |
+| Inbox API (`GetInboxNumItems`/`GetInboxItem`, `ATTACHMENTS_MAX_RECEIVE`) | present: an empty mailbox was read (location 3, 0 items) | journal row 2012 `3,0,0` |
+| End to end | 10 rows journalled -> `read-journal.sh` -> 10 eventstore events, 0 lost, 0 trimmed, re-reads append nothing | `D:/WORKSPACE/data/collection/events.ndjson` (outside every repo, D-8) |
 
 ### Not observable from disk -- needs one in-game probe
 
