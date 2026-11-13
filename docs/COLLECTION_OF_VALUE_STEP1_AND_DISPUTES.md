@@ -22,8 +22,12 @@ SHANKPIT's C host), and `PARENA/scripts/wow-package-refluxcore.sh`, which produc
 every other addon lists in `## Dependencies:`. Not yet loaded in the real client: that needs
 `WOW_INTERFACE` (section 1).
 
-Open: the WoW action-type numbering. SHANKPIT reserves 1-5, 101-128 and the level families; the
-Collection needs its own reserved range, written down before the first primitive dispatches (Step 9).
+Action-type numbering (COV-REFLUX-IDS, decided 2026-11-13): SHANKPIT holds 1-5, 101-128, 1000-1099 and
+1100-1199; the Collection holds **2000-2999**, ten types per addon number 1..100 (addon n owns
+2000 + (n-1)*10 .. +9, so Position (26) is 2250-2259). Defined and tested in
+`PARENA/stdlib/collection/ids.prn` (PARENA 33411fd); reserved in SHANKPIT's `reflux_runtime.h` (dafa6fc)
+so no SHANKPIT family is ever numbered into it. This is an engineering allocation, not a spec fact: the
+founder can renumber it freely until the first primitive dispatches (Step 9).
 
 ### All configuration is environment-driven
 
@@ -47,6 +51,8 @@ first such value. PARENA's own new targets follow the same rule with `?=` (`LUA5
 | `MSYS2_ROOT`, `MSYSTEM` | `C:/msys64`, `UCRT64` | C toolchain |
 | `PARENA_DIR`, `PARENA_BIN` | `.../PARENA`, `.../.parena-bootstrap` | every build |
 | `LUA51`, `REFLUXCORE_OUT` | `lua5.1`, `$PARENA_DIR/build/wow` | REFLUX tests, RefluxCore packager |
+| `COLLECTION_JOURNAL_ADDON`, `COLLECTION_JOURNAL_VAR` | `CollectionJournal`, `CollectionJournalDB` | the journal addon and the SavedVariables reader |
+| `COLLECTION_EVENTS` | `$COLLECTION_WORKSPACE/data/collection/events.ndjson` -- outside every repo (D-8) | the SavedVariables reader |
 | `COLLECTION_SSH_KEY`, `GIT_SSH_COMMAND` | `~/.ssh/id_ed25519_shankpit` | git over SSH |
 
 ## 1. Step 1 -- the WoW Forever addon API
@@ -204,5 +210,5 @@ Format: what the spec says, what the source says, the resolution.
 | 3 LO front end | Open. The LO grammar and emoji set are a spec "Confirm" -- `LO/` holds only a NORTHSTAR and a captured design doc |
 | 4 In-game REFLUX library | **Built** = RefluxCore (section 0) |
 | 5 Event record | **v1 defined** in `PARENA/stdlib/collection/journal.prn`, mapped onto the Go envelope (D-2) |
-| 6 SavedVariables bridge | **In-game half built** (PARENA 76a5d50, 32/32 under Lua 5.1): REFLUX poll -> per-character journal, overwritten rows counted in `lost`. Not yet: the addon glue and `.toc` (need the probe), the external reader, a size cap |
+| 6 SavedVariables bridge | **Both halves built, neither run against the real client.** In game (PARENA 76a5d50, 11e57a0; 53/53 under Lua 5.1): REFLUX poll -> per-character journal, overwritten rows counted in `lost`, a size cap (`journal-trim`) that drops from the low end and never moves `nextSeq`. Outside (PARENA 7f95946, `scripts/collection-journal-read.sh`, 38/38 + wrapper check): reads every `Account/*/*/*/SavedVariables/CollectionJournal.lua` with no globals and an instruction budget, appends new rows to `COLLECTION_EVENTS` as eventstore `Event` lines (checked to unmarshal into the Go struct), dedups on `character:seq`, reports trimmed-before-read gaps (exit 3). Not yet: the addon glue and `.toc` (need the probe); feeding the NDJSON into the Go store's `Append` (Step 7) |
 | 7-14 | Not started |

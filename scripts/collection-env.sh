@@ -37,6 +37,12 @@ export PARENA_BIN="${PARENA_BIN:-$PARENA_DIR/.parena-bootstrap}"
 export LUA51="${LUA51:-lua5.1}"
 # Where `scripts/wow-package-refluxcore.sh` builds the RefluxCore addon folder.
 export REFLUXCORE_OUT="${REFLUXCORE_OUT:-$PARENA_DIR/build/wow}"
+# The SavedVariables journal (Step 6): the in-game addon's folder and global, and the event file the
+# external reader (PARENA/scripts/collection-journal-read.sh) appends to. The event file holds the
+# founder's own play data, so its default is OUTSIDE every repository (Disputes D-8: stays local).
+export COLLECTION_JOURNAL_ADDON="${COLLECTION_JOURNAL_ADDON:-CollectionJournal}"
+export COLLECTION_JOURNAL_VAR="${COLLECTION_JOURNAL_VAR:-CollectionJournalDB}"
+export COLLECTION_EVENTS="${COLLECTION_EVENTS:-$COLLECTION_WORKSPACE/data/collection/events.ndjson}"
 
 # --- git over SSH ---------------------------------------------------------------------------------
 export COLLECTION_SSH_KEY="${COLLECTION_SSH_KEY:-$HOME/.ssh/id_ed25519_shankpit}"
