@@ -43,6 +43,11 @@ export REFLUXCORE_OUT="${REFLUXCORE_OUT:-$PARENA_DIR/build/wow}"
 export COLLECTION_JOURNAL_ADDON="${COLLECTION_JOURNAL_ADDON:-CollectionJournal}"
 export COLLECTION_JOURNAL_VAR="${COLLECTION_JOURNAL_VAR:-CollectionJournalDB}"
 export COLLECTION_EVENTS="${COLLECTION_EVENTS:-$COLLECTION_WORKSPACE/data/collection/events.ndjson}"
+# The Collection event store (Step 7, PARENA/scripts/collection-store-ingest.sh): on-disk compatible with
+# PRRJECT_FATBABY's Go eventstore. Play data, so outside every repository (D-8).
+export COLLECTION_STORE="${COLLECTION_STORE:-$COLLECTION_WORKSPACE/data/collection/store}"
+# Only the optional Go compatibility check reads this.
+export PRRJECT_FATBABY_DIR="${PRRJECT_FATBABY_DIR:-$COLLECTION_MONOREPO/PRRJECT_FATBABY}"
 # The packaged client (PARENA/scripts/wow-package-collection.sh): journal cap and poll interval, and Fafnir's
 # Bed (the inventory manager, spec addon 2): its addon folder and account-wide SavedVariables global.
 export COLLECTION_JOURNAL_KEEP="${COLLECTION_JOURNAL_KEEP:-20000}"
@@ -72,6 +77,6 @@ unset _here _m
 
 # `. collection-env.sh --print` shows the resolved values.
 if [ "${1:-}" = "--print" ]; then
-  env | grep -E '^(COLLECTION_|WOW_|MSYS2_|MSYSTEM|PARENA_|LUA51|REFLUXCORE_|FAFNIR_)' | sort
+  env | grep -E '^(COLLECTION_|WOW_|MSYS2_|MSYSTEM|PARENA_|LUA51|REFLUXCORE_|FAFNIR_|PRRJECT_)' | sort
   [ -n "${WOW_INTERFACE:-}" ] || echo "WOW_INTERFACE is unset (packagers will refuse; run the in-game probe)"
 fi
