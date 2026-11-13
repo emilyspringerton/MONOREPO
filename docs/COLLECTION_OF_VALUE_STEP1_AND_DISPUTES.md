@@ -200,6 +200,9 @@ Format: what the spec says, what the source says, the resolution.
 | 0 Translation core module | **Built**, `PARENA` commit `8c54369`. `make test-i18n` 44/44. Placeholder strings are extracted and checked but not yet lowerable |
 | REFLUX core (gates 2+) | **Built** for WoW: host, `:lua` stdlib keys, RefluxCore packager; 37/37 + 5/5 under Lua 5.1. Not loaded in the client yet (needs `WOW_INTERFACE`) |
 | 1 WoW Forever addon API | **Partly confirmed** (table above). Interface number and macro limits need the in-game probe |
-| 2 PARENA Lua backend | **Exists** (D-1); Lua 5.1 load fixed (D-9); needs extending, not building |
+| 2 PARENA Lua backend | **Extended** (PARENA 3d4c666, e3e92fa): `lua/` bridge to WoW globals/tables/methods, escaped strings, `do`, `lua/set!`/`lua/aset!`; all executed under Lua 5.1. Not yet: event handlers (a defn as a callback), `while`/`loop` (recursion works) |
 | 3 LO front end | Open. The LO grammar and emoji set are a spec "Confirm" -- `LO/` holds only a NORTHSTAR and a captured design doc |
-| 4-14 | Not started |
+| 4 In-game REFLUX library | **Built** = RefluxCore (section 0) |
+| 5 Event record | **v1 defined** in `PARENA/stdlib/collection/journal.prn`, mapped onto the Go envelope (D-2) |
+| 6 SavedVariables bridge | **In-game half built** (PARENA 76a5d50, 32/32 under Lua 5.1): REFLUX poll -> per-character journal, overwritten rows counted in `lost`. Not yet: the addon glue and `.toc` (need the probe), the external reader, a size cap |
+| 7-14 | Not started |
