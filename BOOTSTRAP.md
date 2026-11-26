@@ -1,5 +1,11 @@
 # BOOTSTRAP.md — fresh-box setup & how to reach IDUNA
 
+> **2026-11-26: GCP is gone (shut down for billing).** Everything below about `gcloud`, the GKE cluster
+> `prrject-fatbaby`, and the IDUNA port-forward describes a cluster that no longer exists. Don't spend time on
+> `gcloud auth login`. The cluster is being rebuilt fresh on Vultr: `EMILY/gitops/platform/vultr/README.md`.
+> Until it is live, there is no IDUNA to reach, so `emily apples post` and kanban have nowhere to go. The repo half of
+> bootstrap (`docs/ENVIRONMENT_BOOTSTRAP.md`: clones, Go, `emily`) is unaffected.
+
 Written 2026-10-14 for the next Claude. The founder rebuilds this VM from scratch each time and
 forgets to mention a step or two. A prior session burned a lot of time on exactly the two traps
 below — read this before trying to authenticate to anything.
@@ -215,3 +221,8 @@ git clone ../PELLEGRINO      # then `bash scripts/fetch_mbedtls.sh` -- its vendo
 `make server` needs none of that and is the check to prefer for simulation work. Also: the repo's own
 `LOBBY_SRC` was missing `packages/simulation/dw_play.c` (eleven `dw_play_*` symbols undefined) — fixed in
 SHANKPIT, so a stale checkout will still show that error and is not this box's problem.
+- 2026-11-26 (`/home/ubuntu/MONOREPO`, user `ubuntu`, no sudo): 13 repos cloned (all but EMILY), system `go` fetched
+  1.26.8, all seven `go.work` modules build, `emily` 1.0.0 and kubectl v1.37.3 in `~/.local/bin`. PARENA's renderers
+  needed the SDL headers: the "`make lobby` without sudo" recipe below, with one fix — `mkdir -p ~/.local/opt/sysdev`
+  first, or `dpkg-deb -x` fails with "failed to create directory". **GCP is shut down**, so step 2 onward is moot
+  (see the note at the top).

@@ -1,6 +1,17 @@
 # MONOREPO
 
-## Coding engine (vLLM + Qwen2.5-Coder-14B) on GKE
+## Cluster: moving from GKE to Vultr (2026-11-26)
+
+GCP was shut down for billing on 2026-11-26. The GKE cluster `prrject-fatbaby`, its Artifact Registry and its disks
+are gone, and every `kubectl`/`gcloud` instruction below that points at them is dead. The replacement is Vultr
+Kubernetes Engine, set up as a fresh start: **`EMILY/gitops/platform/vultr/README.md`**. Manifests are rendered with
+`PROVIDER=vultr EMILY/gitops/render.sh` into `EMILY/gitops/clusters/vultr-emily/`. Status: rendered and
+schema-validated. Not deployed yet, because there is no Vultr cluster or registry yet.
+
+## Coding engine (vLLM + Qwen2.5-Coder-14B) — parked
+
+**Not running anywhere.** It needed a GKE L4 GPU, and the Vultr cluster doesn't render it ("drop for now",
+2026-11-26). The notes below describe how it worked on GKE, kept for when it comes back.
 
 A self-hosted OpenAI-compatible coding model in the `emily` namespace. It is an **API, not a website**: you reach it through a `kubectl port-forward` tunnel and talk to it with a coding agent such as Aider.
 
